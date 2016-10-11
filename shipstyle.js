@@ -22,6 +22,7 @@ File               = Java.type("java.io.File");
 FilenameFilter     = Java.type("java.io.FilenameFilter");
 Files              = Java.type("java.nio.file.Files");
 HashMap            = Java.type("java.util.HashMap");
+HashSet            = Java.type("java.util.HashSet");
 HttpURLConnection  = Java.type("java.net.HttpURLConnection");
 LinkedHashSet      = Java.type("java.util.LinkedHashSet"); 
 List               = Java.type("java.util.List");
@@ -42,8 +43,7 @@ data_prefix = "ShipStyleImageVer2_";
 //var startTime;
 
 //定数
-var WIDTH            	  = 80;
-var HEIGHT           	  = 20;
+var IMAGE_SIZE            = { WIDTH:80,HEIGHT:20 };
 var SHIP_LAYER_IMAGE_DIR  = "./script/Image/Layer/";
 var SHIP_NORMAL_IMAGE_DIR = "./script/Image/Ship/Normal/";
 var SHIP_DAMAGE_IMAGE_DIR = "./script/Image/Ship/Damage/";
@@ -62,11 +62,11 @@ var ITEM_ICON_IMAGE_URL   = "https://raw.githubusercontent.com/Nishisonic/AddIma
 var condIndex   = 12;
 var picIndex    = -1;
 var columnIndex = -1;
-var item1Index  = -1;
-var item2Index  = -1;
-var item3Index  = -1;
-var item4Index  = -1;
-var itemExIndex = -1;
+var itemType1Index  = -1;
+var itemType2Index  = -1;
+var itemType3Index  = -1;
+var itemType4Index  = -1;
+var itemTypeExIndex = -1;
 //変数
 var shipTable      = null;
 var oldImageDtoMap = null;
@@ -81,7 +81,7 @@ function begin(header) {
 	startTime = System.currentTimeMillis();
 	missionShips = GlobalContext.getMissionShipSet();
 	ndockShips = GlobalContext.getNDockShipSet();
-	System.out.print("Image Loading...")
+	System.out.print("Image Loading...");
 	if(!getData("isLoaded")){ //nullはfalse
 		System.out.println("Start.");
 		var shipLayerImageDir  = new File(SHIP_LAYER_IMAGE_DIR);
@@ -253,6 +253,11 @@ function create(table, data, index) {
 
 	//画像を貼り付ける
 	item.setImage(picIndex, imageDto.ShipImage);
+	item.setImage(itemType1Index, imageDto.ItemIconList.get(0));
+	item.setImage(itemType2Index, imageDto.ItemIconList.get(1));
+	item.setImage(itemType3Index, imageDto.ItemIconList.get(2));
+	item.setImage(itemType4Index, imageDto.ItemIconList.get(3));
+	item.setImage(itemTypeExIndex, imageDto.ItemIconList.get(4));
 
 	return item;
 }
@@ -288,7 +293,7 @@ function getShipImage(ship){
 		imageSet.add(getCondImage(ship.cond));
 		imageSet.add(getWeddingImage(ship.lv));
 	}
-	return resize(imageSet,WIDTH,HEIGHT);
+	return resize(imageSet,IMAGE_SIZE.WIDTH,IMAGE_SIZE.HEIGHT);
 }
 
 /**
@@ -398,21 +403,21 @@ function getBadlyImage() {
 	var imageSet = new LinkedHashSet();
     imageSet.add(getLayerImage("Badly", BADLY_IMAGE_URL));
 	imageSet.add(getLayerImage("BadlySmoke", BADLY_SMOKE_IMAGE_URL));
-	return resize(imageSet,WIDTH,HEIGHT);
+	return resize(imageSet,IMAGE_SIZE.WIDTH,IMAGE_SIZE.HEIGHT);
 }
 
 function getHalfImage() {
 	var imageSet = new LinkedHashSet();
     imageSet.add(getLayerImage("Half", HALF_IMAGE_URL));
 	imageSet.add(getLayerImage("HalfSmoke", HALF_SMOKE_IMAGE_URL));
-	return resize(imageSet,WIDTH,HEIGHT);
+	return resize(imageSet,IMAGE_SIZE.WIDTH,IMAGE_SIZE.HEIGHT);
 }
 
 function getSlightImage() {
 	var imageSet = new LinkedHashSet();
     imageSet.add(getLayerImage("Slight", SLIGHT_IMAGE_URL));
 	imageSet.add(getLayerImage("SlightSmoke", SLIGHT_SMOKE_IMAGE_URL));
-	return resize(imageSet,WIDTH,HEIGHT);
+	return resize(imageSet,IMAGE_SIZE.WIDTH,IMAGE_SIZE.HEIGHT);
 }
 
 function getLayerImage(name, url) {
@@ -447,12 +452,14 @@ function _getShipImage(ship) {
 }
 
 function getItemIconImage(type3){
+	var imageSet = new HashSet();
     var image  = getData("ITEM_ICON_" + type3 + ".png");
     if (!(image instanceof Image)) {
         image = getWebImage(ITEM_ICON_IMAGE_URL + type3 + ".png", (ITEM_ICON_IMAGE_DIR + type3 + ".png"));
         setTmpData("ITEM_ICON_" + type3 + ".png", image);
     }
-    return image;
+	imageSet.add(image);
+    return resize(imageSet,IMAGE_SIZE.WIDTH,IMAGE_SIZE.HEIGHT);
 }
 
 /**
@@ -469,8 +476,9 @@ var ImageDto = function(shipDto,shipImage,itemIconList){
 ImageDto.prototype.dispose = function(){
 	if(!this.ShipImage.isDisposed()) this.ShipImage.dispose();
 	this.ItemIconList.stream().filter(function(itemIcon){
-		return !(itemIcon == null || itemIcon.isDisposed());
+		return itemIcon instanceof Image && !itemIcon.isDisposed();
 	}).forEach(function(itemIcon){
+		print(itemIcon);
 		itemIcon.dispose();
 	});
 	this.ShipDto = this.ShipImage = this.ItemIconList = null;
