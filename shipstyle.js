@@ -480,7 +480,6 @@ ImageDto.prototype.dispose = function(){
 	this.ItemIconList.stream().filter(function(itemIcon){
 		return itemIcon instanceof Image && !itemIcon.isDisposed();
 	}).forEach(function(itemIcon){
-		print(itemIcon);
 		itemIcon.dispose();
 	});
 	this.ShipDto = this.ShipImage = this.ItemIconList = null;
