@@ -37,6 +37,7 @@ GlobalContext      = Java.type("logbook.data.context.GlobalContext");
 ItemDto            = Java.type("logbook.dto.ItemDto");
 ReportUtils        = Java.type("logbook.util.ReportUtils");
 ShipDto            = Java.type("logbook.dto.ShipDto");
+ShipTable          = Java.type("logbook.gui.ShipTable");
 
 data_prefix = "ShipStyleImageVer2_";
 
@@ -223,7 +224,7 @@ function create(table, data, index) {
 		if(bathWaterTableDialog.shell == table.shell){
 			shipTable = bathWaterTableDialog;
 		}
-		oldImageDtoMap = getData("ImageDtoMap");
+		oldImageDtoMap = getData(shipTable + "_ImageDtoMap");
 		imageDtoMap = new HashMap(); //HashMap<id,ImageDto>
 	}
 
@@ -267,7 +268,7 @@ function end() {
 	//残った分を廃棄 (こうしないとメモリ不足になって落ちる)
 	System.out.print("Image Dispose...");
 	try{
-		setTmpData("ImageDtoMap",imageDtoMap);
+		if(shipTable instanceof ShipTable) setTmpData(shipTable + "_ImageDtoMap",imageDtoMap);
 		if(oldImageDtoMap instanceof Map){
 			oldImageDtoMap.forEach(function(id,imageDto){
 				imageDto.dispose();
