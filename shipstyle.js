@@ -232,17 +232,6 @@ function create(table, data, index) {
 
 	//ディープコピー
 	var shipDto = new ShipDto(ship.getJson());
-	var shipImage = getSynthesisShipImage(ship);
-	var itemList = new ArrayList(shipDto.item2);
-	itemList.add(shipDto.slotExItem);
-	var itemIconImageList = new ArrayList();
-	itemList.forEach(function(item){
-		if(item instanceof ItemDto){
-			itemIconImageList.add(getItemIconImage(item.type3));
-		} else {
-			itemIconImageList.add(null);
-		}
-	});
 
 	var id = ship.id;
 	var imageDto;
@@ -250,6 +239,17 @@ function create(table, data, index) {
 		imageDto = oldImageDtoMap.get(id);
 		oldImageDtoMap.remove(id);
 	} else {
+		var shipImage = getSynthesisShipImage(ship);
+		var itemList = new ArrayList(shipDto.item2);
+		itemList.add(shipDto.slotExItem);
+		var itemIconImageList = new ArrayList();
+		itemList.forEach(function(item){
+			if(item instanceof ItemDto){
+				itemIconImageList.add(getItemIconImage(item.type3));
+			} else {
+				itemIconImageList.add(null);
+			}
+		});
 		imageDto = new ImageDto(shipDto,shipImage,itemIconImageList);
 	}
 	imageDtoMap.put(id,imageDto);
