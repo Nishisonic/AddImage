@@ -18,6 +18,7 @@ TableItem          = Java.type("org.eclipse.swt.widgets.TableItem");
 
 ArrayList          = Java.type("java.util.ArrayList");
 Arrays             = Java.type("java.util.Arrays");
+DecimalFormat      = Java.type("java.text.DecimalFormat");
 File               = Java.type("java.io.File");
 FilenameFilter     = Java.type("java.io.FilenameFilter");
 Files              = Java.type("java.nio.file.Files");
@@ -28,6 +29,7 @@ LinkedHashSet      = Java.type("java.util.LinkedHashSet");
 List               = Java.type("java.util.List");
 Map                = Java.type("java.util.Map");
 Paths              = Java.type("java.nio.file.Paths");
+Runtime            = Java.type("java.lang.Runtime");
 System             = Java.type("java.lang.System");
 URL                = Java.type("java.net.URL");
 
@@ -265,14 +267,17 @@ function create(table, data, index) {
 }
 
 function end() {
-	//残った分を廃棄 (こうしないとメモリ不足になって落ちる)
 	System.out.print("Image Dispose...");
 	try{
+		//次回読み込み短縮のために一時保存
 		if(shipTable instanceof ShipTable) setTmpData(shipTable + "_ImageDtoMap",imageDtoMap);
+		//残った分を廃棄 (こうしないとメモリ不足になって落ちる)
 		if(oldImageDtoMap instanceof Map){
 			oldImageDtoMap.forEach(function(id,imageDto){
 				imageDto.dispose();
+				imageDto = null;
 			});
+			oldImageDtoMap = null;
 		}
 		System.out.println("Complete.");
 	} catch(e) {
@@ -280,10 +285,11 @@ function end() {
 		e.printStackTrace();
 	}
 	System.out.println("Loading Time ->" + (System.currentTimeMillis() - startTime) + "ms.");
+	dispMemoryInfo();
 }
 
-function getShipImage(ship){
-	var shipImage = _getShipImage(ship);
+function getSynthesisShipImage(ship){
+	var shipImage = getShipImage(ship);
 	var imageSet = new LinkedHashSet();
 	//撃沈
 	if(ship.isSunk()){
@@ -376,12 +382,8 @@ function getKiraCondImage(){
 }
 
 function getWeddingImage(lv) {
-    if (lv > 99) return _getWeddingImage();
+    if (lv > 99) return getLayerImage("Wedding", WEDDING_IMAGE_URL);
     return null;
-}
-
-function _getWeddingImage() {
-    return getLayerImage("Wedding", WEDDING_IMAGE_URL);
 }
 
 function getStateImage(ship) {
@@ -431,7 +433,7 @@ function getLayerImage(name, url) {
     return image;
 }
 
-function _getShipImage(ship) {
+function getShipImage(ship) {
 	var shipId = ship.shipId;
 	var prefix;
 	var url;
@@ -484,3 +486,17 @@ ImageDto.prototype.dispose = function(){
 	});
 	this.ShipDto = this.ShipImage = this.ItemIconList = null;
 };
+
+function dispMemoryInfo(){
+    var f1 = new DecimalFormat("#,###KB");
+    var f2 = new DecimalFormat("##.#");
+    var free = Runtime.getRuntime().freeMemory() / 1024;
+    var total = Runtime.getRuntime().totalMemory() / 1024;
+    var max = Runtime.getRuntime().maxMemory() / 1024;
+    var used = total - free;
+    var ratio = used * 100 / total;
+    System.out.println("Java Memory Info : " + 
+		"Total=" + f1.format(total) + "," +
+    	"Used Memory=" + f1.format(used) + " (" + f2.format(ratio) + "%)," +
+    	"Max Can Use Memory="+f1.format(max));
+}
