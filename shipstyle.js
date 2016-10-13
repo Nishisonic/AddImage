@@ -1,5 +1,5 @@
 /*
- * 画像追加 Ver2.0.0
+ * 画像追加 Ver2.0.1
  * Author:Nishisonic,Nekopanda
  * LastUpdate:2016/10/11
  * 
@@ -11,6 +11,8 @@ load("script/ScriptData.js");
 
 Display            = Java.type("org.eclipse.swt.widgets.Display");
 GC                 = Java.type("org.eclipse.swt.graphics.GC");
+Font               = Java.type("org.eclipse.swt.graphics.Font");
+FontData           = Java.type("org.eclipse.swt.graphics.FontData");
 Image              = Java.type("org.eclipse.swt.graphics.Image");
 SWT                = Java.type("org.eclipse.swt.SWT");
 SWTResourceManager = Java.type("org.eclipse.wb.swt.SWTResourceManager");
@@ -240,12 +242,12 @@ function create(table, data, index) {
 		oldImageDtoMap.remove(id);
 	} else {
 		var shipImage = getSynthesisShipImage(ship);
-		var itemList = new ArrayList(shipDto.item2);
-		itemList.add(shipDto.slotExItem);
+		var item2List = new ArrayList(shipDto.item2);
+		item2List.add(shipDto.slotExItem);
 		var itemIconImageList = new ArrayList();
-		itemList.forEach(function(item){
-			if(item instanceof ItemDto){
-				itemIconImageList.add(getItemIconImage(item.type3));
+		item2List.forEach(function(item2){
+			if(item2 instanceof ItemDto){
+				itemIconImageList.add(getSynthesisItemIconImage(item2));
 			} else {
 				itemIconImageList.add(null);
 			}
@@ -288,7 +290,9 @@ function end() {
 	dispMemoryInfo();
 }
 
-function getSynthesisShipImage(ship){
+function getSynthesisShipImage(ship,width,height){
+	var width = typeof width !== 'undefined' ?  width : IMAGE_SIZE.WIDTH;
+	var height = typeof height !== 'undefined' ?  height : IMAGE_SIZE.HEIGHT;
 	var shipImage = getShipImage(ship);
 	var imageSet = new LinkedHashSet();
 	//撃沈
@@ -301,7 +305,29 @@ function getSynthesisShipImage(ship){
 		imageSet.add(getCondImage(ship.cond));
 		imageSet.add(getWeddingImage(ship.lv));
 	}
-	return resize(imageSet,IMAGE_SIZE.WIDTH,IMAGE_SIZE.HEIGHT);
+	return resize(imageSet,width,height);
+}
+
+function getSynthesisItemIconImage(item2,width,height){
+	var width = typeof width !== 'undefined' ?  width : IMAGE_SIZE.WIDTH;
+	var height = typeof height !== 'undefined' ?  height : IMAGE_SIZE.HEIGHT;
+	var fontData = new FontData("Arial", 7, SWT.NORMAL);
+	var font = new Font(Display.getDefault(),fontData);
+	var itemIconImage = getItemIconImage(item2.type3);
+	var alv = item2.alv; //熟練度
+	var lv = item2.level; //改修値
+	//合成処理
+	var scaled = new Image(Display.getDefault(), width, height);
+	var gc = new GC(scaled);
+	gc.setAntialias(SWT.ON);
+	gc.setInterpolation(SWT.HIGH);
+	gc.drawImage(itemIconImage, 0, 0, itemIconImage.getBounds().width, itemIconImage.getBounds().height, 0, 0, width, height);
+    gc.setFont(font);
+	gc.drawString(getDispAlv(alv), 23, 0);
+	gc.drawString(getDispLv(lv), 21, 10);
+	gc.dispose();
+	font.dispose();
+	return scaled;
 }
 
 /**
@@ -456,14 +482,12 @@ function getShipImage(ship) {
 }
 
 function getItemIconImage(type3){
-	var imageSet = new HashSet();
     var image  = getData("ITEM_ICON_" + type3 + ".png");
     if (!(image instanceof Image)) {
         image = getWebImage(ITEM_ICON_IMAGE_URL + type3 + ".png", (ITEM_ICON_IMAGE_DIR + type3 + ".png"));
         setTmpData("ITEM_ICON_" + type3 + ".png", image);
     }
-	imageSet.add(image);
-    return resize(imageSet,IMAGE_SIZE.WIDTH,IMAGE_SIZE.HEIGHT);
+    return image;
 }
 
 /**
@@ -499,4 +523,33 @@ function dispMemoryInfo(){
 		"Total=" + f1.format(total) + "," +
     	"Used Memory=" + f1.format(used) + " (" + f2.format(ratio) + "%)," +
     	"Max Can Use Memory="+f1.format(max));
+}
+
+function getDispAlv(alv){
+	switch(alv){
+		case 0: return "";
+		case 1: return "|";
+		case 2: return "||";
+		case 3: return "|||";
+		case 4: return "\\";
+		case 5: return "\\\\";
+		case 6: return "\\\\\\";
+		case 7: return ">>";
+	}
+}
+
+function getDispLv(lv){
+	switch(lv){
+		case 0: return "";
+		case 1: return "★+1";
+		case 2: return "★+2";
+		case 3: return "★+3";
+		case 4: return "★+4";
+		case 5: return "★+5";
+		case 6: return "★+6";
+		case 7: return "★+7";
+		case 8: return "★+8";
+		case 9: return "★+9";
+		case 10:return "★ma x";
+	}
 }
