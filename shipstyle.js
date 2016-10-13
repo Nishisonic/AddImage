@@ -232,7 +232,7 @@ function create(table, data, index) {
 
 	//ディープコピー
 	var shipDto = new ShipDto(ship.getJson());
-	var shipImage = getShipImage(ship);
+	var shipImage = getSynthesisShipImage(ship);
 	var itemList = new ArrayList(shipDto.item2);
 	itemList.add(shipDto.slotExItem);
 	var itemIconImageList = new ArrayList();
@@ -275,8 +275,10 @@ function end() {
 		if(oldImageDtoMap instanceof Map){
 			oldImageDtoMap.forEach(function(id,imageDto){
 				imageDto.dispose();
+				imageDto = null;
 			});
 		}
+		oldImageDtoMap = null;
 		System.out.println("Complete.");
 	} catch(e) {
 		System.out.println("Failed.");
