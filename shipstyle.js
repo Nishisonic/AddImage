@@ -275,9 +275,7 @@ function end() {
 		if(oldImageDtoMap instanceof Map){
 			oldImageDtoMap.forEach(function(id,imageDto){
 				imageDto.dispose();
-				imageDto = null;
 			});
-			oldImageDtoMap = null;
 		}
 		System.out.println("Complete.");
 	} catch(e) {
