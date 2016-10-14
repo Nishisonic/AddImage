@@ -1,7 +1,7 @@
 /*
  * 画像追加 Ver2.0.1
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2016/10/11
+ * LastUpdate:2016/10/14
  * 
  * 所有艦娘一覧に画像を追加します。
  */
@@ -48,21 +48,29 @@ data_prefix = "ShipStyleImageVer2_";
 //var startTime;
 
 //定数
-var IMAGE_SIZE            = { WIDTH:80,HEIGHT:20 };
-var SHIP_LAYER_IMAGE_DIR  = "./script/Image/Layer/";
-var SHIP_NORMAL_IMAGE_DIR = "./script/Image/Ship/Normal/";
-var SHIP_DAMAGE_IMAGE_DIR = "./script/Image/Ship/Damage/";
-var ITEM_ICON_IMAGE_DIR   = "./script/Image/Item/Icon/";
-var SUNK_IMAGE_URL        = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Sunk.png";
-var RED_COND_IMAGE_URL    = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Red.png";
-var ORANGE_COND_IMAGE_URL = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Orange.png";
-var KIRA_COND_IMAGE_URL   = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Kira.png";
-var WEDDING_IMAGE_URL     = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Wedding.png";
-var MISSION_IMAGE_URL     = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Mission.png";
-var REPAIR_IMAGE_URL      = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Repair.png";
-var SHIP_NORMAL_IMAGE_URL = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Ship/Normal/";
-var SHIP_DAMAGE_IMAGE_URL = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Ship/Damage/";
-var ITEM_ICON_IMAGE_URL   = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Item/Icon/";
+var IMAGE_SIZE             = { WIDTH:80,HEIGHT:20 };
+var SHIP_LAYER_IMAGE_DIR   = "./script/Image/Layer/";
+var SHIP_NORMAL_IMAGE_DIR  = "./script/Image/Ship/Normal/";
+var SHIP_DAMAGE_IMAGE_DIR  = "./script/Image/Ship/Damage/";
+var ITEM_ICON_IMAGE_DIR    = "./script/Image/Item/Icon/";
+var SUNK_IMAGE_URL         = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Sunk.png";
+var RED_COND_IMAGE_URL     = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Red.png";
+var ORANGE_COND_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Orange.png";
+var KIRA_COND_IMAGE_URL    = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Kira.png";
+var WEDDING_IMAGE_URL      = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Wedding.png";
+var MISSION_IMAGE_URL      = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Mission.png";
+var REPAIR_IMAGE_URL       = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Repair.png";
+var SHIP_NORMAL_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Ship/Normal/";
+var SHIP_DAMAGE_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Ship/Damage/";
+var ITEM_ICON_IMAGE_URL    = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Item/Icon/";
+var BADLY_IMAGE_URL        = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Badly.png";
+var BADLY_SMOKE_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/BadlySmoke.png";
+var BADLY_IMAGE_URL        = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Badly.png";
+var BADLY_SMOKE_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/BadlySmoke.png";
+var HALF_IMAGE_URL         = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Half.png";
+var HALF_SMOKE_IMAGE_URL   = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/HalfSmoke.png";
+var SLIGHT_IMAGE_URL       = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Slight.png";
+var SLIGHT_SMOKE_IMAGE_URL = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/SlightSmoke.png";
 //列番号
 var condIndex   = 12;
 var picIndex    = -1;
@@ -232,18 +240,16 @@ function create(table, data, index) {
 		imageDtoMap = new HashMap(); //HashMap<id,ImageDto>
 	}
 
-	//ディープコピー
-	var shipDto = new ShipDto(ship.getJson());
-
 	var id = ship.id;
+	var shipDtoEx = new ShipDtoEx(new ShipDto(ship.getJson()),missionShips.contains(id),ndockShips.contains(id));
 	var imageDto;
-	if(oldImageDtoMap instanceof Map && oldImageDtoMap.containsKey(id) && oldImageDtoMap.get(id).ShipDto.equals(shipDto)){
+	if(oldImageDtoMap instanceof Map && oldImageDtoMap.containsKey(id) && oldImageDtoMap.get(id).ShipDtoEx.equals(shipDtoEx)){
 		imageDto = oldImageDtoMap.get(id);
 		oldImageDtoMap.remove(id);
 	} else {
 		var shipImage = getSynthesisShipImage(ship);
-		var item2List = new ArrayList(shipDto.item2);
-		item2List.add(shipDto.slotExItem);
+		var item2List = new ArrayList(shipDtoEx.ShipDto.item2);
+		item2List.add(shipDtoEx.ShipDto.slotExItem);
 		var itemIconImageList = new ArrayList();
 		item2List.forEach(function(item2){
 			if(item2 instanceof ItemDto){
@@ -252,7 +258,7 @@ function create(table, data, index) {
 				itemIconImageList.add(null);
 			}
 		});
-		imageDto = new ImageDto(shipDto,shipImage,itemIconImageList);
+		imageDto = new ImageDto(shipDtoEx,shipImage,itemIconImageList);
 	}
 	imageDtoMap.put(id,imageDto);
 
@@ -302,6 +308,7 @@ function getSynthesisShipImage(ship,width,height){
 	} else {
 	    imageSet.add(shipImage);
 		imageSet.add(getStateImage(ship));
+		imageSet.add(getSmokeImage(ship));
 		imageSet.add(getCondImage(ship.cond));
 		imageSet.add(getWeddingImage(ship.lv));
 	}
@@ -421,6 +428,16 @@ function getStateImage(ship) {
     return null;
 }
 
+//一時対処
+function getSmokeImage(ship) {
+	if(!(ndockShips.contains(ship.id) || missionShips.contains(ship.id))){
+    	if (ship.isBadlyDamage())  return getBadlySmokeImage();   //大破
+    	if (ship.isHalfDamage())   return getHalfSmokeImage();    //中破
+	    if (ship.isSlightDamage()) return getSlightSmokeImage();  //小破
+	}
+    return null;
+}
+
 function getRepairImage() {
     return getLayerImage("Repair", REPAIR_IMAGE_URL);
 }
@@ -430,24 +447,27 @@ function getMissionImage() {
 }
 
 function getBadlyImage() {
-	var imageSet = new LinkedHashSet();
-    imageSet.add(getLayerImage("Badly", BADLY_IMAGE_URL));
-	imageSet.add(getLayerImage("BadlySmoke", BADLY_SMOKE_IMAGE_URL));
-	return resize(imageSet,IMAGE_SIZE.WIDTH,IMAGE_SIZE.HEIGHT);
+	return getLayerImage("Badly", BADLY_IMAGE_URL);
+}
+
+function getBadlySmokeImage() {
+	return getLayerImage("BadlySmoke", BADLY_SMOKE_IMAGE_URL);
 }
 
 function getHalfImage() {
-	var imageSet = new LinkedHashSet();
-    imageSet.add(getLayerImage("Half", HALF_IMAGE_URL));
-	imageSet.add(getLayerImage("HalfSmoke", HALF_SMOKE_IMAGE_URL));
-	return resize(imageSet,IMAGE_SIZE.WIDTH,IMAGE_SIZE.HEIGHT);
+	return getLayerImage("Half", HALF_IMAGE_URL);
+}
+
+function getHalfSmokeImage() {
+	return getLayerImage("HalfSmoke", HALF_SMOKE_IMAGE_URL);
 }
 
 function getSlightImage() {
-	var imageSet = new LinkedHashSet();
-    imageSet.add(getLayerImage("Slight", SLIGHT_IMAGE_URL));
-	imageSet.add(getLayerImage("SlightSmoke", SLIGHT_SMOKE_IMAGE_URL));
-	return resize(imageSet,IMAGE_SIZE.WIDTH,IMAGE_SIZE.HEIGHT);
+	return getLayerImage("Slight", SLIGHT_IMAGE_URL);
+}
+
+function getSlightSmokeImage() {
+	return getLayerImage("SlightSmoke", SLIGHT_SMOKE_IMAGE_URL);
 }
 
 function getLayerImage(name, url) {
@@ -491,12 +511,12 @@ function getItemIconImage(type3){
 }
 
 /**
- * @param shipDto logbook.dto.ShipDto
+ * @param shipDtoEx 
  * @param shipImage org.eclipse.swt.graphics.Image
  * @param itemIconList java.util.List<org.eclipse.swt.graphics.Image>(5)
  */
-var ImageDto = function(shipDto,shipImage,itemIconList){
-	this.ShipDto      = shipDto;
+var ImageDto = function(shipDtoEx,shipImage,itemIconList){
+	this.ShipDtoEx    = shipDtoEx;
 	this.ShipImage    = shipImage;
 	this.ItemIconList = itemIconList;
 };
@@ -508,7 +528,17 @@ ImageDto.prototype.dispose = function(){
 	}).forEach(function(itemIcon){
 		itemIcon.dispose();
 	});
-	this.ShipDto = this.ShipImage = this.ItemIconList = null;
+	this.ShipDtoEx = this.ShipImage = this.ItemIconList = null;
+};
+
+function ShipDtoEx(shipDto,isMission,isNdock){
+	this.ShipDto = shipDto;
+	this.isMission = isMission;
+	this.isNdock = isNdock;
+}
+
+ShipDtoEx.prototype.equals = function(shipDtoEx){
+	return this.ShipDto.equals(shipDtoEx.ShipDto) && this.isMission == shipDtoEx.isMission && this.isNdock == shipDtoEx.isNdock;
 };
 
 function dispMemoryInfo(){
