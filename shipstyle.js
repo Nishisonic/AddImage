@@ -1,7 +1,7 @@
 /*
- * 画像追加 Ver2.0.2
+ * 画像追加 Ver2.0.3
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2016/10/14
+ * LastUpdate:2016/10/16
  * 
  * 所有艦娘一覧に画像を追加します。
  */
@@ -9,6 +9,7 @@
 load("script/utils.js");
 load("script/ScriptData.js");
 
+Color              = Java.type("org.eclipse.swt.graphics.Color");
 Display            = Java.type("org.eclipse.swt.widgets.Display");
 GC                 = Java.type("org.eclipse.swt.graphics.GC");
 Font               = Java.type("org.eclipse.swt.graphics.Font");
@@ -322,7 +323,34 @@ function getSynthesisItemIconImage(item2,width,height){
 	var font = new Font(Display.getDefault(),fontData);
 	var itemIconImage = getItemIconImage(item2.type3);
 	var alv = item2.alv; //熟練度
+	var alvDto = function(alv){ //即時関数
+		switch(alv){
+			case 0: return {text:"",fgColor:new Color(Display.getDefault(),255,255,255)};
+			case 1: return {text:"|",fgColor:new Color(Display.getDefault(),152,180,205)};
+			case 2: return {text:"||",fgColor:new Color(Display.getDefault(),152,180,205)};
+			case 3: return {text:"|||",fgColor:new Color(Display.getDefault(),152,180,205)};
+			case 4: return {text:"\\",fgColor:new Color(Display.getDefault(),213,161, 55)};
+			case 5: return {text:"\\\\",fgColor:new Color(Display.getDefault(),213,161, 55)};
+			case 6: return {text:"\\\\\\",fgColor:new Color(Display.getDefault(),213,161, 55)};
+			case 7: return {text:">>",fgColor:new Color(Display.getDefault(),213,161, 55)};
+		}
+	}(alv);
 	var lv = item2.level; //改修値
+	var lvDto = function(lv){ //即時関数
+		switch(lv){
+			case 0: return {text:"",fgColor:new Color(Display.getDefault(),255,255,255)};
+			case 1: return {text:"★+1",fgColor:new Color(Display.getDefault(), 69,169,165)};
+			case 2: return {text:"★+2",fgColor:new Color(Display.getDefault(), 69,169,165)};
+			case 3: return {text:"★+3",fgColor:new Color(Display.getDefault(), 69,169,165)};
+			case 4: return {text:"★+4",fgColor:new Color(Display.getDefault(), 69,169,165)};
+			case 5: return {text:"★+5",fgColor:new Color(Display.getDefault(), 69,169,165)};
+			case 6: return {text:"★+6",fgColor:new Color(Display.getDefault(), 69,169,165)};
+			case 7: return {text:"★+7",fgColor:new Color(Display.getDefault(), 69,169,165)};
+			case 8: return {text:"★+8",fgColor:new Color(Display.getDefault(), 69,169,165)};
+			case 9: return {text:"★+9",fgColor:new Color(Display.getDefault(), 69,169,165)};
+			case 10:return {text:"★ma x",fgColor:new Color(Display.getDefault(), 69,169,165)};
+		}
+	}(lv);
 	//合成処理
 	var scaled = new Image(Display.getDefault(), width, height);
 	var gc = new GC(scaled);
@@ -330,10 +358,14 @@ function getSynthesisItemIconImage(item2,width,height){
 	gc.setInterpolation(SWT.HIGH);
 	gc.drawImage(itemIconImage, 0, 0, itemIconImage.getBounds().width, itemIconImage.getBounds().height, 0, 0, width, height);
     gc.setFont(font);
-	gc.drawString(getDispAlv(alv), 23, 0);
-	gc.drawString(getDispLv(lv), 21, 10);
+	gc.setForeground(alvDto.fgColor);
+	gc.drawString(alvDto.text, 23, 0);
+	gc.setForeground(lvDto.fgColor);
+	gc.drawString(lvDto.text, 21, 10);
 	gc.dispose();
 	font.dispose();
+	alvDto.fgColor.dispose();
+	lvDto.fgColor.dispose();
 	return scaled;
 }
 
@@ -553,33 +585,4 @@ function dispMemoryInfo(){
 		"Total=" + f1.format(total) + "," +
     	"Used Memory=" + f1.format(used) + " (" + f2.format(ratio) + "%)," +
     	"Max Can Use Memory="+f1.format(max));
-}
-
-function getDispAlv(alv){
-	switch(alv){
-		case 0: return "";
-		case 1: return "|";
-		case 2: return "||";
-		case 3: return "|||";
-		case 4: return "\\";
-		case 5: return "\\\\";
-		case 6: return "\\\\\\";
-		case 7: return ">>";
-	}
-}
-
-function getDispLv(lv){
-	switch(lv){
-		case 0: return "";
-		case 1: return "★+1";
-		case 2: return "★+2";
-		case 3: return "★+3";
-		case 4: return "★+4";
-		case 5: return "★+5";
-		case 6: return "★+6";
-		case 7: return "★+7";
-		case 8: return "★+8";
-		case 9: return "★+9";
-		case 10:return "★ma x";
-	}
 }
