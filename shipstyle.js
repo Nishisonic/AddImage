@@ -238,6 +238,7 @@ function create(table, data, index) {
 		}
 		oldImageDtoMap = getData(shipTable + "_ImageDtoMap");
 		imageDtoMap = new HashMap(); //HashMap<id,ImageDto>
+		setTableListener(table);
 	}
 
 	var id = ship.id;
@@ -268,7 +269,7 @@ function create(table, data, index) {
 	item.setImage(itemType2Index, imageDto.ItemIconList.get(1));
 	item.setImage(itemType3Index, imageDto.ItemIconList.get(2));
 	item.setImage(itemType4Index, imageDto.ItemIconList.get(3));
-	//item.setImage(itemTypeExIndex, imageDto.ItemIconList.get(4)); 5スロ目対応分
+	//item.setImage(itemType5Index, imageDto.ItemIconList.get(4)); 5スロ目対応分
 	item.setImage(itemTypeExIndex, imageDto.ItemIconList.get(5));
 
 	return item;
@@ -583,3 +584,135 @@ function getDispLv(lv){
 		case 10:return "★ma x";
 	}
 }
+
+function setTableListener(table){
+	listener = getData("phandler");
+	if(listener != null) {
+		table.removeListener(SWT.EraseItem, listener);
+	}
+	table.addListener(SWT.EraseItem, paintHandler);
+	setTmpData("phandler", paintHandler);
+}
+
+var paintHandler = new Listener({
+	handleEvent: function(event) {
+		var gc = event.gc;
+		var old = gc.background;
+		var d = event.item.data;
+		var backcolor = null;
+		// 背景を描く
+		if(event.index == categoryIndex) {
+			backcolor = d.cat;
+		}
+		else if(event.index == stateIndex) {
+			backcolor = d.state;
+		}
+		if(backcolor == null) {
+			backcolor = d.back;
+		}
+		if(backcolor != null) {
+			gc.background = backcolor;
+			gc.fillRectangle(event.x, event.y, event.width, event.height);
+		}
+		// 進捗を描く
+		if(event.index == progressIndex) {
+			if(d.prog != null) {
+				gc.background = d.prog;
+				// バーを下 1/5 に表示する
+				var y = event.y + event.height * 4 / 5;
+				// はみ出した部分はクリッピングされるので高さはそのままでいい
+				gc.fillRectangle(event.x, y, event.width * d.rate, event.height);
+			}
+		}
+		gc.background = old;
+		event.detail &= ~SWT.BACKGROUND;
+	}
+});
+
+function categoryColor(category) {
+	switch (category) {
+		case 1:		//編成
+			return new RGB( 0xAA, 0xFF, 0xAA );
+		case 2:		//出撃
+			return new RGB( 0xFF, 0xCC, 0xCC );
+		case 3:		//演習
+			return new RGB( 0xDD, 0xFF, 0xAA );
+		case 4:		//遠征
+			return new RGB( 0xCC, 0xFF, 0xFF );
+		case 5:		//補給/入渠
+			return new RGB( 0xFF, 0xFF, 0xCC );
+		case 6:		//工廠
+			return new RGB( 0xDD, 0xCC, 0xBB );
+		case 7:		//改装
+			return new RGB( 0xDD, 0xCC, 0xFF );
+		case 8:		//その他
+		default:
+			return new RGB( 0xFF, 0xFF, 0xFF );
+	}
+}
+
+function progressColor(rate) {
+	if ( rate < 0.5 ) {
+		return new RGB( 0xFF, 0x88, 0x00 );
+	}
+	else if ( rate < 0.8 ) {
+		return new RGB( 0x00, 0xCC, 0x00 );
+	}
+	else if ( rate < 1.0 ) {
+		return new RGB( 0x00, 0x88, 0x00 );
+	}
+	else {
+		return new RGB( 0x00, 0x88, 0xFF );
+	}
+}
+
+var paintHandler = new Listener({
+	handleEvent: function(event) {
+		var gc = event.gc;
+		var old = gc.background;
+		var d = event.item.data;
+		var backcolor = null;
+		// 背景を描く
+		switch(event.index){
+			case hpIndex:
+				backcolor = hp;
+				break;
+			case fuelIndex:
+				backcolor = fuel;
+				break;
+			case ammoIndex:
+				backcolor = ammo;
+				break;
+			case lvIndex:
+				backcolor = lv;
+				break;
+			case nextIndex:
+				backcolor = next;
+				break;
+			case expIndex:
+				backcolor = exp;
+				break;
+			default:
+				break;
+		}
+		if(backcolor == null) {
+			backcolor = d.back;
+		}
+		if(backcolor != null) {
+			gc.background = backcolor;
+			gc.fillRectangle(event.x, event.y, event.width, event.height);
+		}
+		// 進捗を描く
+		if(event.index == progressIndex) {
+			if(d.prog != null) {
+				gc.background = d.prog;
+				// バーを下 1/5 に表示する
+				var y = event.y + event.height * 4 / 5;
+				// はみ出した部分はクリッピングされるので高さはそのままでいい
+				gc.fillRectangle(event.x, y, event.width * d.rate, event.height);
+			}
+		}
+		gc.background = old;
+		event.detail &= ~SWT.BACKGROUND;
+	}
+});
