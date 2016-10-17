@@ -1,7 +1,7 @@
 /*
  * 画像追加 Ver2.0.3
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2016/10/17
+ * LastUpdate:2016/10/18
  * 
  * 所有艦娘一覧に画像を追加します。
  */
@@ -28,6 +28,7 @@ Files              = Java.type("java.nio.file.Files");
 HashMap            = Java.type("java.util.HashMap");
 HashSet            = Java.type("java.util.HashSet");
 HttpURLConnection  = Java.type("java.net.HttpURLConnection");
+IntStream          = Java.type("java.util.stream.IntStream");
 LinkedHashSet      = Java.type("java.util.LinkedHashSet"); 
 List               = Java.type("java.util.List");
 Map                = Java.type("java.util.Map");
@@ -35,6 +36,8 @@ Paths              = Java.type("java.nio.file.Paths");
 Runtime            = Java.type("java.lang.Runtime");
 System             = Java.type("java.lang.System");
 URL                = Java.type("java.net.URL");
+
+JsonObject         = Java.type("javax.json.JsonObject");
 
 AppConstants       = Java.type("logbook.constants.AppConstants");
 ApplicationMain    = Java.type("logbook.gui.ApplicationMain");
@@ -242,12 +245,18 @@ function create(table, data, index) {
 	}
 
 	var id = ship.id;
-	var shipDtoEx = new ShipDtoEx(new ShipDto(ship.getJson()),missionShips.contains(id),ndockShips.contains(id));
+	var json = ship.json;
+	var shipDtoEx;
+	if(json instanceof JsonObject){
+		shipDtoEx = new ShipDtoEx(new ShipDto(json),missionShips.contains(id),ndockShips.contains(id));
+	} else {
+		shipDtoEx = new ShipDtoEx(null,missionShips.contains(id),ndockShips.contains(id));
+	}
 	var imageDto;
 	if(oldImageDtoMap instanceof Map && oldImageDtoMap.containsKey(id) && oldImageDtoMap.get(id).ShipDtoEx.equals(shipDtoEx)){
 		imageDto = oldImageDtoMap.get(id);
 		oldImageDtoMap.remove(id);
-	} else {
+	} else if(shipDtoEx.ShipDto instanceof ShipDto) {
 		var shipImage = getSynthesisShipImage(ship);
 		var item2List = new ArrayList(shipDtoEx.ShipDto.item2);
 		item2List.add(shipDtoEx.ShipDto.slotExItem);
@@ -260,6 +269,11 @@ function create(table, data, index) {
 			}
 		});
 		imageDto = new ImageDto(shipDtoEx,shipImage,itemIconImageList);
+	} else { //新規艦取得時限定…多分
+		var shipImage = getSynthesisShipImage(ship);
+		var itemIconImageList = new ArrayList(); //取得しているか曖昧なので空で作成
+		IntStream.range(0,6).forEach(function(i){ itemIconImageList.add(null); }); //1~5スロ目+補強増設分
+		imageDto = new ImageDto(shipDtoEx,shipImage,itemIconImageList); 
 	}
 	if(imageDtoMap instanceof Map) imageDtoMap.put(id,imageDto);
 
@@ -570,7 +584,7 @@ function ShipDtoEx(shipDto,isMission,isNdock){
 }
 
 ShipDtoEx.prototype.equals = function(shipDtoEx){
-	return this.ShipDto.equals(shipDtoEx.ShipDto) && this.isMission == shipDtoEx.isMission && this.isNdock == shipDtoEx.isNdock;
+	return this.ShipDto instanceof ShipDto && this.ShipDto.equals(shipDtoEx.ShipDto) && this.isMission == shipDtoEx.isMission && this.isNdock == shipDtoEx.isNdock;
 };
 
 function dispMemoryInfo(){
