@@ -261,7 +261,7 @@ function create(table, data, index) {
 		});
 		imageDto = new ImageDto(shipDtoEx,shipImage,itemIconImageList);
 	}
-	imageDtoMap.put(id,imageDto);
+	if(imageDtoMap instanceof Map) imageDtoMap.put(id,imageDto);
 
 	//画像を貼り付ける
 	item.setImage(picIndex, imageDto.ShipImage);
@@ -269,7 +269,7 @@ function create(table, data, index) {
 	item.setImage(itemType2Index, imageDto.ItemIconList.get(1));
 	item.setImage(itemType3Index, imageDto.ItemIconList.get(2));
 	item.setImage(itemType4Index, imageDto.ItemIconList.get(3));
-	//item.setImage(itemTypeExIndex, imageDto.ItemIconList.get(4)); 5スロ目対応分
+	//item.setImage(itemType5Index, imageDto.ItemIconList.get(4)); 5スロ目対応分
 	item.setImage(itemTypeExIndex, imageDto.ItemIconList.get(5));
 
 	return item;
