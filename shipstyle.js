@@ -107,6 +107,12 @@ var itemType2Index  = -1;
 var itemType3Index  = -1;
 var itemType4Index  = -1;
 var itemTypeExIndex = -1;
+var hpIndex     = -1;
+var fuelIndex   = -1;
+var ammoIndex   = -1;
+var lvIndex     = -1;
+var nextIndex   = -1;
+var expIndex    = -1;
 //変数
 var shipTable      = null;
 var oldPaintDtoMap = null;
@@ -181,27 +187,20 @@ function begin(header) {
 		System.out.println("Already.");
 	}
 	for (var i = 0; i < header.length; ++i) {
-		if (header[i].equals("疲労")) {
-			condIndex = i;
-		}
-		if (header[i].equals("画像")) {
-			picIndex = i;
-		}
-		if (header[i].equals("種別画像1")) {
-			itemType1Index = i;
-		}
-		if (header[i].equals("種別画像2")) {
-			itemType2Index = i;
-		}
-		if (header[i].equals("種別画像3")) {
-			itemType3Index = i;
-		}
-		if (header[i].equals("種別画像4")) {
-			itemType4Index = i;
-		}
-		if (header[i].equals("種別画像Ex")) {
-			itemTypeExIndex = i;
-		}
+		if (header[i].equals("疲労"))            condIndex = i;
+		if (header[i].equals("画像"))            picIndex = i;
+		if (header[i].equals("種別画像1"))       itemType1Index = i;
+		if (header[i].equals("種別画像2"))       itemType2Index = i;
+		if (header[i].equals("種別画像3"))       itemType3Index = i;
+		if (header[i].equals("種別画像4"))       itemType4Index = i;
+		//if (header[i].equals("種別画像5"))     itemType5Index = i;
+		if (header[i].equals("種別画像Ex"))      itemTypeExIndex = i;
+		if (header[i].equals("HP"))              hpIndex = i;
+		if (header[i].equals("燃料#現在の燃料")) fuelIndex = i;
+		if (header[i].equals("弾薬#現在の弾薬")) ammoIndex = i;
+		if (header[i].equals("Lv"))              lvIndex = i;
+		if (header[i].equals("Next"))            nextIndex = i;
+		if (header[i].equals("経験値"))          expIndex = i;
 	}
 }
 
@@ -733,14 +732,15 @@ function getProgress(gc,value,max,color){
 
 var paintHandler = new Listener(function(event) {
 	var gc = event.gc;
-	var old = gc.background;
 	var d = event.item.data;
 	var backcolor = null;
 	// 背景を描く
-	if(event.index == categoryIndex) {
-		backcolor = d.cat;
+	switch(event.index){
+		
 	}
-	else if(event.index == stateIndex) {
+
+
+	if(event.index == stateIndex) {
 		backcolor = d.state;
 	}
 	if(backcolor == null) {
