@@ -1,39 +1,45 @@
 /*
- * 画像追加 Ver2.0.2
+ * 画像追加 Ver2.0.5
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2016/10/14
+ * LastUpdate:2016/10/18
  * 
  * 所有艦娘一覧に画像を追加します。
  */
 
-load("script/utils.js");
 load("script/ScriptData.js");
 
 Display            = Java.type("org.eclipse.swt.widgets.Display");
+Event              = Java.type("org.eclipse.swt.widgets.Event");
+FillLayout         = Java.type("org.eclipse.swt.layout.FillLayout");
 GC                 = Java.type("org.eclipse.swt.graphics.GC");
-Font               = Java.type("org.eclipse.swt.graphics.Font");
-FontData           = Java.type("org.eclipse.swt.graphics.FontData");
 Image              = Java.type("org.eclipse.swt.graphics.Image");
+Label              = Java.type("org.eclipse.swt.widgets.Label");
+Listener           = Java.type("org.eclipse.swt.widgets.Listener");
+Point              = Java.type("org.eclipse.swt.graphics.Point");
+RGB                = Java.type("org.eclipse.swt.graphics.RGB");
+Shell              = Java.type("org.eclipse.swt.widgets.Shell");
 SWT                = Java.type("org.eclipse.swt.SWT");
 SWTResourceManager = Java.type("org.eclipse.wb.swt.SWTResourceManager");
 TableItem          = Java.type("org.eclipse.swt.widgets.TableItem");
 
 ArrayList          = Java.type("java.util.ArrayList");
 Arrays             = Java.type("java.util.Arrays");
+Collections        = Java.type("java.util.Collections");
 DecimalFormat      = Java.type("java.text.DecimalFormat");
 File               = Java.type("java.io.File");
 FilenameFilter     = Java.type("java.io.FilenameFilter");
 Files              = Java.type("java.nio.file.Files");
 HashMap            = Java.type("java.util.HashMap");
-HashSet            = Java.type("java.util.HashSet");
 HttpURLConnection  = Java.type("java.net.HttpURLConnection");
+IntStream          = Java.type("java.util.stream.IntStream");
 LinkedHashSet      = Java.type("java.util.LinkedHashSet"); 
-List               = Java.type("java.util.List");
 Map                = Java.type("java.util.Map");
 Paths              = Java.type("java.nio.file.Paths");
 Runtime            = Java.type("java.lang.Runtime");
 System             = Java.type("java.lang.System");
 URL                = Java.type("java.net.URL");
+
+JsonObject         = Java.type("javax.json.JsonObject");
 
 AppConstants       = Java.type("logbook.constants.AppConstants");
 ApplicationMain    = Java.type("logbook.gui.ApplicationMain");
@@ -71,6 +77,27 @@ var HALF_IMAGE_URL         = "https://raw.githubusercontent.com/Nishisonic/AddIm
 var HALF_SMOKE_IMAGE_URL   = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/HalfSmoke.png";
 var SLIGHT_IMAGE_URL       = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Slight.png";
 var SLIGHT_SMOKE_IMAGE_URL = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/SlightSmoke.png";
+var ALV_COLOR              = [new RGB(255,255,255),
+							  new RGB(152,180,205),
+							  new RGB(152,180,205),
+							  new RGB(152,180,205),
+							  new RGB(213,161, 55),
+							  new RGB(213,161, 55),
+							  new RGB(213,161, 55),
+							  new RGB(213,161, 55),
+							];
+var LV_COLOR               = [new RGB(255,255,255),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							];
 //列番号
 var condIndex   = 12;
 var picIndex    = -1;
@@ -84,6 +111,8 @@ var itemTypeExIndex = -1;
 var shipTable      = null;
 var oldImageDtoMap = null;
 var imageDtoMap    = null;
+var tip            = null;
+var label          = null;
 
 var missionShips;
 var ndockShips;
@@ -107,7 +136,7 @@ function begin(header) {
 			System.out.println("Complete.");
 			//レイヤー
 			Arrays.stream(shipLayerImageDir.listFiles(ImageFilter)).forEach(function(file){
-				setTmpData("LAYER_" + file.getName(),new Image(Display.getDefault(), file.toString()));
+				setTmpData("LAYER_" + file.getName(),SWTResourceManager.getImage(file.toString()));
 			});
 		} else {
 			System.out.println("Failed.");
@@ -118,7 +147,7 @@ function begin(header) {
 			System.out.println("Complete.");
 			//通常
 			Arrays.stream(shipNormalImageDir.listFiles(ImageFilter)).forEach(function(file){
-				setTmpData("NORMAL_" + file.getName(),new Image(Display.getDefault(), file.toString()));
+				setTmpData("NORMAL_" + file.getName(),SWTResourceManager.getImage(file.toString()));
 			});
 		} else {
 			System.out.println("Failed.");
@@ -129,7 +158,7 @@ function begin(header) {
 			System.out.println("Complete.");
 			//損傷
 			Arrays.stream(shipDamageImageDir.listFiles(ImageFilter)).forEach(function(file){
-				setTmpData("DAMAGE_" + file.getName(),new Image(Display.getDefault(), file.toString()));
+				setTmpData("DAMAGE_" + file.getName(),SWTResourceManager.getImage(file.toString()));
 			});
 		} else {
 			System.out.println("Failed.");
@@ -140,7 +169,7 @@ function begin(header) {
 			System.out.println("Complete.");
 			//アイコン
 			Arrays.stream(itemIconImageDir.listFiles(ImageFilter)).forEach(function(file){
-				setTmpData("ITEM_ICON_" + file.getName(),new Image(Display.getDefault(), file.toString()));
+				setTmpData("ITEM_ICON_" + file.getName(),SWTResourceManager.getImage(file.toString()));
 			});
 		} else {
 			System.out.println("Failed.");
@@ -242,12 +271,18 @@ function create(table, data, index) {
 	}
 
 	var id = ship.id;
-	var shipDtoEx = new ShipDtoEx(new ShipDto(ship.getJson()),missionShips.contains(id),ndockShips.contains(id));
+	var json = ship.json;
+	var shipDtoEx;
+	if(json instanceof JsonObject){
+		shipDtoEx = new ShipDtoEx(new ShipDto(json),missionShips.contains(id),ndockShips.contains(id));
+	} else {
+		shipDtoEx = new ShipDtoEx(null,missionShips.contains(id),ndockShips.contains(id));
+	}
 	var imageDto;
 	if(oldImageDtoMap instanceof Map && oldImageDtoMap.containsKey(id) && oldImageDtoMap.get(id).ShipDtoEx.equals(shipDtoEx)){
 		imageDto = oldImageDtoMap.get(id);
 		oldImageDtoMap.remove(id);
-	} else {
+	} else if(shipDtoEx.ShipDto instanceof ShipDto) {
 		var shipImage = getSynthesisShipImage(ship);
 		var item2List = new ArrayList(shipDtoEx.ShipDto.item2);
 		item2List.add(shipDtoEx.ShipDto.slotExItem);
@@ -260,8 +295,13 @@ function create(table, data, index) {
 			}
 		});
 		imageDto = new ImageDto(shipDtoEx,shipImage,itemIconImageList);
+	} else { //新規艦取得時限定…多分
+		var shipImage = getSynthesisShipImage(ship);
+		var itemIconImageList = new ArrayList(); //取得しているか曖昧なので空で作成
+		Collections.addAll(itemIconImageList, null, null, null, null, null, null); //1~5スロ目+補強増設分
+		imageDto = new ImageDto(shipDtoEx,shipImage,itemIconImageList); 
 	}
-	imageDtoMap.put(id,imageDto);
+	if(imageDtoMap instanceof Map) imageDtoMap.put(id,imageDto);
 
 	//画像を貼り付ける
 	item.setImage(picIndex, imageDto.ShipImage);
@@ -271,6 +311,73 @@ function create(table, data, index) {
 	item.setImage(itemType4Index, imageDto.ItemIconList.get(3));
 	//item.setImage(itemType5Index, imageDto.ItemIconList.get(4)); 5スロ目対応分
 	item.setImage(itemTypeExIndex, imageDto.ItemIconList.get(5));
+
+	//ツールチップ処理
+
+	var TableListener = new Listener({
+    	handleEvent : function(event) {
+   		    switch (event.type) {
+        		case SWT.Dispose:
+        		case SWT.KeyDown:
+        		case SWT.MouseMove: {
+        			if (tip == null) break;
+         			tip.dispose();
+          			tip = null;
+          			label = null;
+          			break;
+        		}
+	        	case SWT.MouseHover: {
+					var point = new Point(event.x, event.y);
+    	    		var _ship = table.getItem(point);
+					var columnIndex = getColumnIndex(point,_ship);
+					var itemName = getItemName(columnIndex,_ship);
+        			if (_ship != null && itemName != null) {
+       	     			if (tip != null && !tip.isDisposed()) tip.dispose();
+        	   			tip = new Shell(table.getShell(), SWT.ON_TOP | SWT.TOOL);
+						tip.setLayout(new FillLayout());
+						label = new Label (tip, SWT.NONE);
+						label.setData ("_TABLEITEM", _ship);
+						var itemName = getItemName(columnIndex,_ship);
+						label.setText (getItemName(columnIndex,_ship));
+						label.addListener (SWT.MouseExit, LabelListener);
+						label.addListener (SWT.MouseDown, LabelListener);
+						var size = tip.computeSize (SWT.DEFAULT, SWT.DEFAULT);
+						var pt = table.toDisplay (event.x, event.y);
+						tip.setBounds (pt.x + 15, pt.y + 5, size.x, size.y);
+						tip.setVisible (true);
+       				}
+        		}
+        	}
+		}
+	});
+	
+	var LabelListener = new Listener({
+		handleEvent : function(event){
+			var _label = Label.class.cast(event.widget);
+			var shell1 = label.getShell();
+			switch (event.type){
+				case SWT.MouseDown:
+					var e = new Event();
+					e.item = TableItem.class.cast(_label.getData("_TABLEITEM"));
+					table.notifyListeners(SWT.Selection, e);
+					shell1.dispose();
+					table.setFocus();
+					break;
+				case SWT.MouseExit:
+					shell1.dispose();
+					break;
+			}
+		}
+	});
+
+	if(typeof getData("set") !== 'boolean'){
+		table.setToolTipText("");
+		table.addListener(SWT.Dispose, TableListener);
+    	table.addListener(SWT.KeyDown, TableListener);
+    	table.addListener(SWT.MouseMove, TableListener);
+    	table.addListener(SWT.MouseHover, TableListener);
+		setTmpData("set",true);
+	}
 
 	return item;
 }
@@ -319,11 +426,39 @@ function getSynthesisShipImage(ship,width,height){
 function getSynthesisItemIconImage(item2,width,height){
 	var width = typeof width !== 'undefined' ?  width : IMAGE_SIZE.WIDTH;
 	var height = typeof height !== 'undefined' ?  height : IMAGE_SIZE.HEIGHT;
-	var fontData = new FontData("Arial", 7, SWT.NORMAL);
-	var font = new Font(Display.getDefault(),fontData);
+	var font = SWTResourceManager.getFont("Arial", 7, SWT.NORMAL);
 	var itemIconImage = getItemIconImage(item2.type3);
 	var alv = item2.alv; //熟練度
+	var alvText = function(alv){ //即時関数
+		switch(alv){
+			case 0: return "";
+			case 1: return "|";
+			case 2: return "||";
+			case 3: return "|||";
+			case 4: return "\\";
+			case 5: return "\\\\";
+			case 6: return "\\\\\\";
+			case 7: return ">>";
+    	}
+	}(alv);
+	var alvColor = SWTResourceManager.getColor(LV_COLOR[alv]);
 	var lv = item2.level; //改修値
+	var lvText = function(lv){ //即時関数
+		switch(lv){
+			case 0: return "";
+			case 1: return "★+1";
+			case 2: return "★+2";
+			case 3: return "★+3";
+			case 4: return "★+4";
+			case 5: return "★+5";
+			case 6: return "★+6";
+			case 7: return "★+7";
+			case 8: return "★+8";
+			case 9: return "★+9";
+			case 10:return "★ma x";
+    	}
+	}(lv);
+	var lvColor = SWTResourceManager.getColor(LV_COLOR[lv]);
 	//合成処理
 	var scaled = new Image(Display.getDefault(), width, height);
 	var gc = new GC(scaled);
@@ -331,10 +466,14 @@ function getSynthesisItemIconImage(item2,width,height){
 	gc.setInterpolation(SWT.HIGH);
 	gc.drawImage(itemIconImage, 0, 0, itemIconImage.getBounds().width, itemIconImage.getBounds().height, 0, 0, width, height);
     gc.setFont(font);
-	gc.drawString(getDispAlv(alv), 23, 0);
-	gc.drawString(getDispLv(lv), 21, 10);
+	gc.setForeground(alvColor);
+	gc.drawString(alvText, 23, 0);
+	gc.setForeground(lvColor);
+	gc.drawString(lvText, 21, 10);
 	gc.dispose();
-	font.dispose();
+	//font.dispose();
+	//alvColor.dispose();
+	//lvColor.dispose();
 	return scaled;
 }
 
@@ -381,7 +520,7 @@ function getWebImage(uri,path){
 			Files.copy(urlConnection.getInputStream(), file);
 			System.out.println("Complete.");
 			System.out.println("Save location ->" + file.toString());
-			return new Image(Display.getDefault(),file.toString());
+			return SWTResourceManager.getImage(file.toString());
 		} else {
 			System.out.print("Failed:");
 			System.out.println(urlConnection.getResponseMessage() + "(" + urlConnection.getResponseCode() + ").");
@@ -539,7 +678,7 @@ function ShipDtoEx(shipDto,isMission,isNdock){
 }
 
 ShipDtoEx.prototype.equals = function(shipDtoEx){
-	return this.ShipDto.equals(shipDtoEx.ShipDto) && this.isMission == shipDtoEx.isMission && this.isNdock == shipDtoEx.isNdock;
+	return this.ShipDto instanceof ShipDto && this.ShipDto.equals(shipDtoEx.ShipDto) && this.isMission == shipDtoEx.isMission && this.isNdock == shipDtoEx.isNdock;
 };
 
 function dispMemoryInfo(){
@@ -556,33 +695,38 @@ function dispMemoryInfo(){
     	"Max Can Use Memory="+f1.format(max));
 }
 
-function getDispAlv(alv){
-	switch(alv){
-		case 0: return "";
-		case 1: return "|";
-		case 2: return "||";
-		case 3: return "|||";
-		case 4: return "\\";
-		case 5: return "\\\\";
-		case 6: return "\\\\\\";
-		case 7: return ">>";
-	}
+function getColumnIndex(pt,item){
+	var columns = item.getParent().getColumnCount();
+	return IntStream.range(0,columns).filter(function(index){
+		var rect = item.getBounds(index);
+		return pt.x >= rect.x && pt.x < rect.x + rect.width;
+	}).findFirst().orElse(-1);
 }
 
-function getDispLv(lv){
-	switch(lv){
-		case 0: return "";
-		case 1: return "★+1";
-		case 2: return "★+2";
-		case 3: return "★+3";
-		case 4: return "★+4";
-		case 5: return "★+5";
-		case 6: return "★+6";
-		case 7: return "★+7";
-		case 8: return "★+8";
-		case 9: return "★+9";
-		case 10:return "★ma x";
+function getItemName(index,ship){
+	var itemDto;
+	switch(index){
+		case itemType1Index:
+			itemDto = ship.data.item2.get(0);
+			break;
+		case itemType2Index: 
+			itemDto = ship.data.item2.get(1);
+			break;
+		case itemType3Index: 
+			itemDto = ship.data.item2.get(2);
+			break;
+		case itemType4Index: 
+			itemDto = ship.data.item2.get(3);
+			break;
+		//case itemType5Index: 
+		//	itemDto = ship.data.item2.get(4);
+		//	break;
+		case itemTypeExIndex: 
+			itemDto = ship.data.slotExItem;
+			break;
+		default: return null;
 	}
+<<<<<<< HEAD
 }
 
 function setTableListener(table){
@@ -716,3 +860,7 @@ var paintHandler = new Listener({
 		event.detail &= ~SWT.BACKGROUND;
 	}
 });
+=======
+	return itemDto instanceof ItemDto ? itemDto.name : null;
+}
+>>>>>>> master

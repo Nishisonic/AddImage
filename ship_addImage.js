@@ -1,7 +1,7 @@
 /*
- * 画像追加 Ver2.0.2
+ * 画像追加 Ver2.0.5
  * Author:Nishisonic
- * LastUpdate:2016/10/14
+ * LastUpdate:2016/10/18
  * 
  * 所有艦娘一覧に画像を追加します。
  */
@@ -15,7 +15,7 @@ function header() {
 function begin(specdiff) {}
 
 function body(ship) {
-	return toComparable([null]);
+	return toComparable([ null ]);
 }
 
 function end() {}
