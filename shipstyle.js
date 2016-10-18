@@ -98,27 +98,38 @@ var LV_COLOR               = [new RGB(255,255,255),
 							  new RGB( 69,169,165),
 							  new RGB( 69,169,165),
 							];
+var HP_PROGRESS_COLOR     = {UNDAMEGED:AppConstants.MUKIZU_SHIP_COLOR[0],
+							 SLIGHT_DAMAGE:AppConstants.SYOHA_SHIP_COLOR[0],
+							 HALF_DAMAGE:AppConstants.TYUHA_SHIP_COLOR[0],
+							 BADLY_DAMAGE:AppConstants.TAIHA_SHIP_COLOR[0],
+							 SUNK:AppConstants.SUNK_SHIP_COLOR,
+							};
+var FUEL_PROGRESS_COLOR   = new RGB(0x00, 0x80, 0x00);
+var AMMO_PROGRESS_COLOR   = new RGB(0x66, 0x33, 0x00);
+var LV_PROGRESS_COLOR     = new RGB(0, 114, 178);
+var NEXT_PROGRESS_COLOR   = new RGB(0, 114, 178);
+var EXP_PROGRESS_COLOR    = new RGB(0, 114, 178);
 //列番号
-var condIndex   = 12;
-var picIndex    = -1;
-var columnIndex = -1;
+var condIndex       = 12;
+var picIndex        = -1;
+var columnIndex     = -1;
 var itemType1Index  = -1;
 var itemType2Index  = -1;
 var itemType3Index  = -1;
 var itemType4Index  = -1;
 var itemTypeExIndex = -1;
-var hpIndex     = -1;
-var fuelIndex   = -1;
-var ammoIndex   = -1;
-var lvIndex     = -1;
-var nextIndex   = -1;
-var expIndex    = -1;
+var hpIndex         = -1;
+var fuelIndex       = -1;
+var ammoIndex       = -1;
+var lvIndex         = -1;
+var nextIndex       = -1;
+var expIndex        = -1;
 //変数
-var shipTable      = null;
-var oldPaintDtoMap = null;
-var paintDtoMap    = null;
-var tip            = null;
-var label          = null;
+var shipTable       = null;
+var oldPaintDtoMap  = null;
+var paintDtoMap     = null;
+var tip             = null;
+var label           = null;
 
 var missionShips;
 var ndockShips;
@@ -220,12 +231,10 @@ function create(table, data, index) {
 	
 	var item = new TableItem(table, SWT.NONE);
 
-	item.setData(ship);
-
 	// 偶数行に背景色を付ける
-	if ((index % 2) != 0) {
-		item.setBackground(SWTResourceManager.getColor(AppConstants.ROW_BACKGROUND));
-	}
+	//if ((index % 2) != 0) {
+	//	item.setBackground(SWTResourceManager.getColor(AppConstants.ROW_BACKGROUND));
+	//}
 
 	// 疲労
 	item.setBackground(condIndex, getTableCondColor(ship.cond));
@@ -292,7 +301,6 @@ function create(table, data, index) {
 				itemIconImageList.add(null);
 			}
 		});
-		var hpProgress = getProgress()
 		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
 	} else { //新規艦取得時限定…多分
 		var shipImage = getSynthesisShipImage(ship);
@@ -361,12 +369,15 @@ function create(table, data, index) {
 		}
 	});
 
+	item.setData(ship);
+
 	if(typeof getData("set") !== 'boolean'){
 		table.setToolTipText("");
 		table.addListener(SWT.Dispose, TableListener);
     	table.addListener(SWT.KeyDown, TableListener);
     	table.addListener(SWT.MouseMove, TableListener);
     	table.addListener(SWT.MouseHover, TableListener);
+		table.addListener(SWT.EraseItem, PaintHandler);
 		setTmpData("set",true);
 	}
 
@@ -726,40 +737,31 @@ function getItemName(index,ship){
 	return itemDto instanceof ItemDto ? itemDto.name : null;
 }
 
-function getProgress(gc,value,max,color){
 
-}
-
-var paintHandler = new Listener(function(event) {
+var PaintHandler = new Listener(function(event) {
 	var gc = event.gc;
-	var d = event.item.data;
-	var backcolor = null;
+	var old = gc.background;
 	// 背景を描く
-	switch(event.index){
-		
-	}
-
-
-	if(event.index == stateIndex) {
-		backcolor = d.state;
-	}
-	if(backcolor == null) {
-		backcolor = d.back;
-	}
-	if(backcolor != null) {
-		gc.background = backcolor;
-		gc.fillRectangle(event.x, event.y, event.width, event.height);
-	}
-	// 進捗を描く
-	if(event.index == progressIndex) {
-		if(d.prog != null) {
-			gc.background = d.prog;
-			// バーを下 1/5 に表示する
-			var y = event.y + event.height * 4 / 5;
-			// はみ出した部分はクリッピングされるので高さはそのままでいい
-			gc.fillRectangle(event.x, y, event.width * d.rate, event.height);
+	var bgColor = function(index){
+		switch(index){
+			case hpIndex:   return SWTResourceManager.getColor(HP_PROGRESS_COLOR);
+			case fuelIndex: return SWTResourceManager.getColor(FUEL_PROGRESS_COLOR);
+			case ammoIndex: return SWTResourceManager.getColor(AMMO_PROGRESS_COLOR);
+			case lvIndex:   return SWTResourceManager.getColor(LV_PROGRESS_COLOR);
+			case nextIndex: return SWTResourceManager.getColor(NEXT_PROGRESS_COLOR);
+			case expIndex:  return SWTResourceManager.getColor(EXP_PROGRESS_COLOR);
+			default:        return null;
 		}
+	}(event.index);
+
+	if(bgColor != null){
+		// 進捗を描く
+		// バーを下 1/5 に表示する
+		gc.setBackground(bgColor);
+		var y = event.y + event.height * 4 / 5;
+		// はみ出した部分はクリッピングされるので高さはそのままでいい
+		gc.fillRectangle(event.x, y, event.width, event.height);
 	}
-	gc.background = old;
+	gc.setBackground(old);
 	event.detail &= ~SWT.BACKGROUND;
 });
