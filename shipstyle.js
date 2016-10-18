@@ -109,8 +109,8 @@ var itemType4Index  = -1;
 var itemTypeExIndex = -1;
 //変数
 var shipTable      = null;
-var oldImageDtoMap = null;
-var imageDtoMap    = null;
+var oldPaintDtoMap = null;
+var paintDtoMap    = null;
 var tip            = null;
 var label          = null;
 
@@ -265,9 +265,8 @@ function create(table, data, index) {
 		if(bathWaterTableDialog.shell == table.shell){
 			shipTable = bathWaterTableDialog;
 		}
-		oldImageDtoMap = getData(shipTable + "_ImageDtoMap");
-		imageDtoMap = new HashMap(); //HashMap<id,ImageDto>
-		setTableListener(table);
+		oldPaintDtoMap = getData(shipTable + "_PaintDtoMap");
+		paintDtoMap = new HashMap(); //HashMap<id,PaintDto>
 	}
 
 	var id = ship.id;
@@ -278,10 +277,10 @@ function create(table, data, index) {
 	} else {
 		shipDtoEx = new ShipDtoEx(null,missionShips.contains(id),ndockShips.contains(id));
 	}
-	var imageDto;
-	if(oldImageDtoMap instanceof Map && oldImageDtoMap.containsKey(id) && oldImageDtoMap.get(id).ShipDtoEx.equals(shipDtoEx)){
-		imageDto = oldImageDtoMap.get(id);
-		oldImageDtoMap.remove(id);
+	var paintDto;
+	if(oldPaintDtoMap instanceof Map && oldPaintDtoMap.containsKey(id) && oldPaintDtoMap.get(id).ShipDtoEx.equals(shipDtoEx)){
+		paintDto = oldPaintDtoMap.get(id);
+		oldPaintDtoMap.remove(id);
 	} else if(shipDtoEx.ShipDto instanceof ShipDto) {
 		var shipImage = getSynthesisShipImage(ship);
 		var item2List = new ArrayList(shipDtoEx.ShipDto.item2);
@@ -294,23 +293,23 @@ function create(table, data, index) {
 				itemIconImageList.add(null);
 			}
 		});
-		imageDto = new ImageDto(shipDtoEx,shipImage,itemIconImageList);
+		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
 	} else { //新規艦取得時限定…多分
 		var shipImage = getSynthesisShipImage(ship);
 		var itemIconImageList = new ArrayList(); //取得しているか曖昧なので空で作成
 		Collections.addAll(itemIconImageList, null, null, null, null, null, null); //1~5スロ目+補強増設分
-		imageDto = new ImageDto(shipDtoEx,shipImage,itemIconImageList); 
+		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList); 
 	}
-	if(imageDtoMap instanceof Map) imageDtoMap.put(id,imageDto);
+	if(paintDtoMap instanceof Map) paintDtoMap.put(id,paintDto);
 
 	//画像を貼り付ける
-	item.setImage(picIndex, imageDto.ShipImage);
-	item.setImage(itemType1Index, imageDto.ItemIconList.get(0));
-	item.setImage(itemType2Index, imageDto.ItemIconList.get(1));
-	item.setImage(itemType3Index, imageDto.ItemIconList.get(2));
-	item.setImage(itemType4Index, imageDto.ItemIconList.get(3));
-	//item.setImage(itemType5Index, imageDto.ItemIconList.get(4)); 5スロ目対応分
-	item.setImage(itemTypeExIndex, imageDto.ItemIconList.get(5));
+	item.setImage(picIndex, paintDto.ShipImage);
+	item.setImage(itemType1Index, paintDto.ItemIconList.get(0));
+	item.setImage(itemType2Index, paintDto.ItemIconList.get(1));
+	item.setImage(itemType3Index, paintDto.ItemIconList.get(2));
+	item.setImage(itemType4Index, paintDto.ItemIconList.get(3));
+	//item.setImage(itemType5Index, paintDto.ItemIconList.get(4)); 5スロ目対応分
+	item.setImage(itemTypeExIndex, paintDto.ItemIconList.get(5));
 
 	//ツールチップ処理
 
@@ -386,15 +385,15 @@ function end() {
 	System.out.print("Image Dispose...");
 	try{
 		//次回読み込み短縮のために一時保存
-		if(shipTable instanceof ShipTable) setTmpData(shipTable + "_ImageDtoMap",imageDtoMap);
+		if(shipTable instanceof ShipTable) setTmpData(shipTable + "_PaintDtoMap",paintDtoMap);
 		//残った分を廃棄 (こうしないとメモリ不足になって落ちる)
-		if(oldImageDtoMap instanceof Map){
-			oldImageDtoMap.forEach(function(id,imageDto){
-				imageDto.dispose();
-				imageDto = null;
+		if(oldPaintDtoMap instanceof Map){
+			oldPaintDtoMap.forEach(function(id,paintDto){
+				paintDto.dispose();
+				paintDto = null;
 			});
 		}
-		oldImageDtoMap = null;
+		oldPaintDtoMap = null;
 		System.out.println("Complete.");
 	} catch(e) {
 		System.out.println("Failed.");
@@ -655,13 +654,19 @@ function getItemIconImage(type3){
  * @param shipImage org.eclipse.swt.graphics.Image
  * @param itemIconList java.util.List<org.eclipse.swt.graphics.Image>(5)
  */
-var ImageDto = function(shipDtoEx,shipImage,itemIconList){
+var PaintDto = function(shipDtoEx,shipImage,itemIconList,hpProgress,fuelProgress,ammoProgress,lvProgress,nextProgress,expProgress){
 	this.ShipDtoEx    = shipDtoEx;
 	this.ShipImage    = shipImage;
 	this.ItemIconList = itemIconList;
+	this.HpProgress   = hpProgress;
+	this.FuelProgress = fuelProgress;
+	this.AmmoProgress = ammoProgress;
+	this.LvProgress   = lvProgress;
+	this.NextProgress = nextProgress;
+	this.expProgress  = expProgress;
 };
 
-ImageDto.prototype.dispose = function(){
+PaintDto.prototype.dispose = function(){
 	if(!this.ShipImage.isDisposed()) this.ShipImage.dispose();
 	this.ItemIconList.stream().filter(function(itemIcon){
 		return itemIcon instanceof Image && !itemIcon.isDisposed();
@@ -726,141 +731,5 @@ function getItemName(index,ship){
 			break;
 		default: return null;
 	}
-<<<<<<< HEAD
-}
-
-function setTableListener(table){
-	listener = getData("phandler");
-	if(listener != null) {
-		table.removeListener(SWT.EraseItem, listener);
-	}
-	table.addListener(SWT.EraseItem, paintHandler);
-	setTmpData("phandler", paintHandler);
-}
-
-var paintHandler = new Listener({
-	handleEvent: function(event) {
-		var gc = event.gc;
-		var old = gc.background;
-		var d = event.item.data;
-		var backcolor = null;
-		// 背景を描く
-		if(event.index == categoryIndex) {
-			backcolor = d.cat;
-		}
-		else if(event.index == stateIndex) {
-			backcolor = d.state;
-		}
-		if(backcolor == null) {
-			backcolor = d.back;
-		}
-		if(backcolor != null) {
-			gc.background = backcolor;
-			gc.fillRectangle(event.x, event.y, event.width, event.height);
-		}
-		// 進捗を描く
-		if(event.index == progressIndex) {
-			if(d.prog != null) {
-				gc.background = d.prog;
-				// バーを下 1/5 に表示する
-				var y = event.y + event.height * 4 / 5;
-				// はみ出した部分はクリッピングされるので高さはそのままでいい
-				gc.fillRectangle(event.x, y, event.width * d.rate, event.height);
-			}
-		}
-		gc.background = old;
-		event.detail &= ~SWT.BACKGROUND;
-	}
-});
-
-function categoryColor(category) {
-	switch (category) {
-		case 1:		//編成
-			return new RGB( 0xAA, 0xFF, 0xAA );
-		case 2:		//出撃
-			return new RGB( 0xFF, 0xCC, 0xCC );
-		case 3:		//演習
-			return new RGB( 0xDD, 0xFF, 0xAA );
-		case 4:		//遠征
-			return new RGB( 0xCC, 0xFF, 0xFF );
-		case 5:		//補給/入渠
-			return new RGB( 0xFF, 0xFF, 0xCC );
-		case 6:		//工廠
-			return new RGB( 0xDD, 0xCC, 0xBB );
-		case 7:		//改装
-			return new RGB( 0xDD, 0xCC, 0xFF );
-		case 8:		//その他
-		default:
-			return new RGB( 0xFF, 0xFF, 0xFF );
-	}
-}
-
-function progressColor(rate) {
-	if ( rate < 0.5 ) {
-		return new RGB( 0xFF, 0x88, 0x00 );
-	}
-	else if ( rate < 0.8 ) {
-		return new RGB( 0x00, 0xCC, 0x00 );
-	}
-	else if ( rate < 1.0 ) {
-		return new RGB( 0x00, 0x88, 0x00 );
-	}
-	else {
-		return new RGB( 0x00, 0x88, 0xFF );
-	}
-}
-
-var paintHandler = new Listener({
-	handleEvent: function(event) {
-		var gc = event.gc;
-		var old = gc.background;
-		var d = event.item.data;
-		var backcolor = null;
-		// 背景を描く
-		switch(event.index){
-			case hpIndex:
-				backcolor = hp;
-				break;
-			case fuelIndex:
-				backcolor = fuel;
-				break;
-			case ammoIndex:
-				backcolor = ammo;
-				break;
-			case lvIndex:
-				backcolor = lv;
-				break;
-			case nextIndex:
-				backcolor = next;
-				break;
-			case expIndex:
-				backcolor = exp;
-				break;
-			default:
-				break;
-		}
-		if(backcolor == null) {
-			backcolor = d.back;
-		}
-		if(backcolor != null) {
-			gc.background = backcolor;
-			gc.fillRectangle(event.x, event.y, event.width, event.height);
-		}
-		// 進捗を描く
-		if(event.index == progressIndex) {
-			if(d.prog != null) {
-				gc.background = d.prog;
-				// バーを下 1/5 に表示する
-				var y = event.y + event.height * 4 / 5;
-				// はみ出した部分はクリッピングされるので高さはそのままでいい
-				gc.fillRectangle(event.x, y, event.width * d.rate, event.height);
-			}
-		}
-		gc.background = old;
-		event.detail &= ~SWT.BACKGROUND;
-	}
-});
-=======
 	return itemDto instanceof ItemDto ? itemDto.name : null;
 }
->>>>>>> master
