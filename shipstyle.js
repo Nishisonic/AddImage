@@ -1,36 +1,31 @@
 /*
- * 画像追加 Ver2.0.3.5
+ * 画像追加 Ver2.0.4
  * Author:Nishisonic,Nekopanda
  * LastUpdate:2016/10/18
  * 
  * 所有艦娘一覧に画像を追加します。
  */
 
-load("script/utils.js");
 load("script/ScriptData.js");
 
-Color              = Java.type("org.eclipse.swt.graphics.Color");
 Display            = Java.type("org.eclipse.swt.widgets.Display");
 GC                 = Java.type("org.eclipse.swt.graphics.GC");
-Font               = Java.type("org.eclipse.swt.graphics.Font");
-FontData           = Java.type("org.eclipse.swt.graphics.FontData");
 Image              = Java.type("org.eclipse.swt.graphics.Image");
+RGB                = Java.type("org.eclipse.swt.graphics.RGB");
 SWT                = Java.type("org.eclipse.swt.SWT");
 SWTResourceManager = Java.type("org.eclipse.wb.swt.SWTResourceManager");
 TableItem          = Java.type("org.eclipse.swt.widgets.TableItem");
 
 ArrayList          = Java.type("java.util.ArrayList");
 Arrays             = Java.type("java.util.Arrays");
+Collections        = Java.type("java.util.Collections");
 DecimalFormat      = Java.type("java.text.DecimalFormat");
 File               = Java.type("java.io.File");
 FilenameFilter     = Java.type("java.io.FilenameFilter");
 Files              = Java.type("java.nio.file.Files");
 HashMap            = Java.type("java.util.HashMap");
-HashSet            = Java.type("java.util.HashSet");
 HttpURLConnection  = Java.type("java.net.HttpURLConnection");
-IntStream          = Java.type("java.util.stream.IntStream");
 LinkedHashSet      = Java.type("java.util.LinkedHashSet"); 
-List               = Java.type("java.util.List");
 Map                = Java.type("java.util.Map");
 Paths              = Java.type("java.nio.file.Paths");
 Runtime            = Java.type("java.lang.Runtime");
@@ -75,6 +70,27 @@ var HALF_IMAGE_URL         = "https://raw.githubusercontent.com/Nishisonic/AddIm
 var HALF_SMOKE_IMAGE_URL   = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/HalfSmoke.png";
 var SLIGHT_IMAGE_URL       = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Slight.png";
 var SLIGHT_SMOKE_IMAGE_URL = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/SlightSmoke.png";
+var ALV_COLOR              = [new RGB(255,255,255),
+							  new RGB(152,180,205),
+							  new RGB(152,180,205),
+							  new RGB(152,180,205),
+							  new RGB(213,161, 55),
+							  new RGB(213,161, 55),
+							  new RGB(213,161, 55),
+							  new RGB(213,161, 55),
+							];
+var LV_COLOR               = [new RGB(255,255,255),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							  new RGB( 69,169,165),
+							];
 //列番号
 var condIndex   = 12;
 var picIndex    = -1;
@@ -111,7 +127,7 @@ function begin(header) {
 			System.out.println("Complete.");
 			//レイヤー
 			Arrays.stream(shipLayerImageDir.listFiles(ImageFilter)).forEach(function(file){
-				setTmpData("LAYER_" + file.getName(),new Image(Display.getDefault(), file.toString()));
+				setTmpData("LAYER_" + file.getName(),SWTResourceManager.getImage(file.toString()));
 			});
 		} else {
 			System.out.println("Failed.");
@@ -122,7 +138,7 @@ function begin(header) {
 			System.out.println("Complete.");
 			//通常
 			Arrays.stream(shipNormalImageDir.listFiles(ImageFilter)).forEach(function(file){
-				setTmpData("NORMAL_" + file.getName(),new Image(Display.getDefault(), file.toString()));
+				setTmpData("NORMAL_" + file.getName(),SWTResourceManager.getImage(file.toString()));
 			});
 		} else {
 			System.out.println("Failed.");
@@ -133,7 +149,7 @@ function begin(header) {
 			System.out.println("Complete.");
 			//損傷
 			Arrays.stream(shipDamageImageDir.listFiles(ImageFilter)).forEach(function(file){
-				setTmpData("DAMAGE_" + file.getName(),new Image(Display.getDefault(), file.toString()));
+				setTmpData("DAMAGE_" + file.getName(),SWTResourceManager.getImage(file.toString()));
 			});
 		} else {
 			System.out.println("Failed.");
@@ -144,7 +160,7 @@ function begin(header) {
 			System.out.println("Complete.");
 			//アイコン
 			Arrays.stream(itemIconImageDir.listFiles(ImageFilter)).forEach(function(file){
-				setTmpData("ITEM_ICON_" + file.getName(),new Image(Display.getDefault(), file.toString()));
+				setTmpData("ITEM_ICON_" + file.getName(),SWTResourceManager.getImage(file.toString()));
 			});
 		} else {
 			System.out.println("Failed.");
@@ -272,7 +288,7 @@ function create(table, data, index) {
 	} else { //新規艦取得時限定…多分
 		var shipImage = getSynthesisShipImage(ship);
 		var itemIconImageList = new ArrayList(); //取得しているか曖昧なので空で作成
-		IntStream.range(0,6).forEach(function(i){ itemIconImageList.add(null); }); //1~5スロ目+補強増設分
+		Collections.addAll(itemIconImageList, null, null, null, null, null, null); //1~5スロ目+補強増設分
 		imageDto = new ImageDto(shipDtoEx,shipImage,itemIconImageList); 
 	}
 	if(imageDtoMap instanceof Map) imageDtoMap.put(id,imageDto);
@@ -333,38 +349,39 @@ function getSynthesisShipImage(ship,width,height){
 function getSynthesisItemIconImage(item2,width,height){
 	var width = typeof width !== 'undefined' ?  width : IMAGE_SIZE.WIDTH;
 	var height = typeof height !== 'undefined' ?  height : IMAGE_SIZE.HEIGHT;
-	var fontData = new FontData("Arial", 7, SWT.NORMAL);
-	var font = new Font(Display.getDefault(),fontData);
+	var font = SWTResourceManager.getFont("Arial", 7, SWT.NORMAL);
 	var itemIconImage = getItemIconImage(item2.type3);
 	var alv = item2.alv; //熟練度
-	var alvDto = function(alv){ //即時関数
+	var alvText = function(alv){ //即時関数
 		switch(alv){
-			case 0: return {text:"",fgColor:new Color(Display.getDefault(),255,255,255)};
-			case 1: return {text:"|",fgColor:new Color(Display.getDefault(),152,180,205)};
-			case 2: return {text:"||",fgColor:new Color(Display.getDefault(),152,180,205)};
-			case 3: return {text:"|||",fgColor:new Color(Display.getDefault(),152,180,205)};
-			case 4: return {text:"\\",fgColor:new Color(Display.getDefault(),213,161, 55)};
-			case 5: return {text:"\\\\",fgColor:new Color(Display.getDefault(),213,161, 55)};
-			case 6: return {text:"\\\\\\",fgColor:new Color(Display.getDefault(),213,161, 55)};
-			case 7: return {text:">>",fgColor:new Color(Display.getDefault(),213,161, 55)};
-		}
+			case 0: return "";
+			case 1: return "|";
+			case 2: return "||";
+			case 3: return "|||";
+			case 4: return "\\";
+			case 5: return "\\\\";
+			case 6: return "\\\\\\";
+			case 7: return ">>";
+    	}
 	}(alv);
+	var alvColor = SWTResourceManager.getColor(LV_COLOR[alv]);
 	var lv = item2.level; //改修値
-	var lvDto = function(lv){ //即時関数
+	var lvText = function(lv){ //即時関数
 		switch(lv){
-			case 0: return {text:"",fgColor:new Color(Display.getDefault(),255,255,255)};
-			case 1: return {text:"★+1",fgColor:new Color(Display.getDefault(), 69,169,165)};
-			case 2: return {text:"★+2",fgColor:new Color(Display.getDefault(), 69,169,165)};
-			case 3: return {text:"★+3",fgColor:new Color(Display.getDefault(), 69,169,165)};
-			case 4: return {text:"★+4",fgColor:new Color(Display.getDefault(), 69,169,165)};
-			case 5: return {text:"★+5",fgColor:new Color(Display.getDefault(), 69,169,165)};
-			case 6: return {text:"★+6",fgColor:new Color(Display.getDefault(), 69,169,165)};
-			case 7: return {text:"★+7",fgColor:new Color(Display.getDefault(), 69,169,165)};
-			case 8: return {text:"★+8",fgColor:new Color(Display.getDefault(), 69,169,165)};
-			case 9: return {text:"★+9",fgColor:new Color(Display.getDefault(), 69,169,165)};
-			case 10:return {text:"★ma x",fgColor:new Color(Display.getDefault(), 69,169,165)};
-		}
+			case 0: return "";
+			case 1: return "★+1";
+			case 2: return "★+2";
+			case 3: return "★+3";
+			case 4: return "★+4";
+			case 5: return "★+5";
+			case 6: return "★+6";
+			case 7: return "★+7";
+			case 8: return "★+8";
+			case 9: return "★+9";
+			case 10:return "★ma x";
+    	}
 	}(lv);
+	var lvColor = SWTResourceManager.getColor(LV_COLOR[lv]);
 	//合成処理
 	var scaled = new Image(Display.getDefault(), width, height);
 	var gc = new GC(scaled);
@@ -372,14 +389,14 @@ function getSynthesisItemIconImage(item2,width,height){
 	gc.setInterpolation(SWT.HIGH);
 	gc.drawImage(itemIconImage, 0, 0, itemIconImage.getBounds().width, itemIconImage.getBounds().height, 0, 0, width, height);
     gc.setFont(font);
-	gc.setForeground(alvDto.fgColor);
-	gc.drawString(alvDto.text, 23, 0);
-	gc.setForeground(lvDto.fgColor);
-	gc.drawString(lvDto.text, 21, 10);
+	gc.setForeground(alvColor);
+	gc.drawString(alvText, 23, 0);
+	gc.setForeground(lvColor);
+	gc.drawString(lvText, 21, 10);
 	gc.dispose();
-	font.dispose();
-	alvDto.fgColor.dispose();
-	lvDto.fgColor.dispose();
+	//font.dispose();
+	//alvColor.dispose();
+	//lvColor.dispose();
 	return scaled;
 }
 
@@ -426,7 +443,7 @@ function getWebImage(uri,path){
 			Files.copy(urlConnection.getInputStream(), file);
 			System.out.println("Complete.");
 			System.out.println("Save location ->" + file.toString());
-			return new Image(Display.getDefault(),file.toString());
+			return SWTResourceManager.getImage(file.toString());
 		} else {
 			System.out.print("Failed:");
 			System.out.println(urlConnection.getResponseMessage() + "(" + urlConnection.getResponseCode() + ").");
