@@ -663,7 +663,7 @@ var PaintDto = function(shipDtoEx,shipImage,itemIconList,hpProgress,fuelProgress
 	this.AmmoProgress = ammoProgress;
 	this.LvProgress   = lvProgress;
 	this.NextProgress = nextProgress;
-	this.expProgress  = expProgress;
+	this.ExpProgress  = expProgress;
 };
 
 PaintDto.prototype.dispose = function(){
@@ -673,7 +673,7 @@ PaintDto.prototype.dispose = function(){
 	}).forEach(function(itemIcon){
 		itemIcon.dispose();
 	});
-	this.ShipDtoEx = this.ShipImage = this.ItemIconList = null;
+	this.ShipDtoEx = this.ShipImage = this.ItemIconList = this.HpProgress = this.FuelProgress = this.AmmoProgress = this.LvProgress = this.NextProgress = this.ExpProgress = null;
 };
 
 function ShipDtoEx(shipDto,isMission,isNdock){
