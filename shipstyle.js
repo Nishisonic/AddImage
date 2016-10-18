@@ -1,5 +1,5 @@
 /*
- * 画像追加 Ver2.0.4
+ * 画像追加 Ver2.0.5
  * Author:Nishisonic,Nekopanda
  * LastUpdate:2016/10/18
  * 
@@ -9,9 +9,15 @@
 load("script/ScriptData.js");
 
 Display            = Java.type("org.eclipse.swt.widgets.Display");
+Event              = Java.type("org.eclipse.swt.widgets.Event");
+FillLayout         = Java.type("org.eclipse.swt.layout.FillLayout");
 GC                 = Java.type("org.eclipse.swt.graphics.GC");
 Image              = Java.type("org.eclipse.swt.graphics.Image");
+Label              = Java.type("org.eclipse.swt.widgets.Label");
+Listener           = Java.type("org.eclipse.swt.widgets.Listener");
+Point              = Java.type("org.eclipse.swt.graphics.Point");
 RGB                = Java.type("org.eclipse.swt.graphics.RGB");
+Shell              = Java.type("org.eclipse.swt.widgets.Shell");
 SWT                = Java.type("org.eclipse.swt.SWT");
 SWTResourceManager = Java.type("org.eclipse.wb.swt.SWTResourceManager");
 TableItem          = Java.type("org.eclipse.swt.widgets.TableItem");
@@ -25,6 +31,7 @@ FilenameFilter     = Java.type("java.io.FilenameFilter");
 Files              = Java.type("java.nio.file.Files");
 HashMap            = Java.type("java.util.HashMap");
 HttpURLConnection  = Java.type("java.net.HttpURLConnection");
+IntStream          = Java.type("java.util.stream.IntStream");
 LinkedHashSet      = Java.type("java.util.LinkedHashSet"); 
 Map                = Java.type("java.util.Map");
 Paths              = Java.type("java.nio.file.Paths");
@@ -104,6 +111,8 @@ var itemTypeExIndex = -1;
 var shipTable      = null;
 var oldImageDtoMap = null;
 var imageDtoMap    = null;
+var tip            = null;
+var label          = null;
 
 var missionShips;
 var ndockShips;
@@ -301,6 +310,73 @@ function create(table, data, index) {
 	item.setImage(itemType4Index, imageDto.ItemIconList.get(3));
 	//item.setImage(itemType5Index, imageDto.ItemIconList.get(4)); 5スロ目対応分
 	item.setImage(itemTypeExIndex, imageDto.ItemIconList.get(5));
+
+	//ツールチップ処理
+
+	var TableListener = new Listener({
+    	handleEvent : function(event) {
+   		    switch (event.type) {
+        		case SWT.Dispose:
+        		case SWT.KeyDown:
+        		case SWT.MouseMove: {
+        			if (tip == null) break;
+         			tip.dispose();
+          			tip = null;
+          			label = null;
+          			break;
+        		}
+	        	case SWT.MouseHover: {
+					var point = new Point(event.x, event.y);
+    	    		var _ship = table.getItem(point);
+					var columnIndex = getColumnIndex(point,_ship);
+					var itemName = getItemName(columnIndex,_ship);
+        			if (_ship != null && itemName != null) {
+       	     			if (tip != null && !tip.isDisposed()) tip.dispose();
+        	   			tip = new Shell(table.getShell(), SWT.ON_TOP | SWT.TOOL);
+						tip.setLayout(new FillLayout());
+						label = new Label (tip, SWT.NONE);
+						label.setData ("_TABLEITEM", _ship);
+						var itemName = getItemName(columnIndex,_ship);
+						label.setText (getItemName(columnIndex,_ship));
+						label.addListener (SWT.MouseExit, LabelListener);
+						label.addListener (SWT.MouseDown, LabelListener);
+						var size = tip.computeSize (SWT.DEFAULT, SWT.DEFAULT);
+						var pt = table.toDisplay (event.x, event.y);
+						tip.setBounds (pt.x + 15, pt.y + 5, size.x, size.y);
+						tip.setVisible (true);
+       				}
+        		}
+        	}
+		}
+	});
+	
+	var LabelListener = new Listener({
+		handleEvent : function(event){
+			var _label = Label.class.cast(event.widget);
+			var shell1 = label.getShell();
+			switch (event.type){
+				case SWT.MouseDown:
+					var e = new Event();
+					e.item = TableItem.class.cast(_label.getData("_TABLEITEM"));
+					table.notifyListeners(SWT.Selection, e);
+					shell1.dispose();
+					table.setFocus();
+					break;
+				case SWT.MouseExit:
+					shell1.dispose();
+					break;
+			}
+		}
+	});
+
+	if(typeof getData("set") !== 'boolean'){
+		table.setToolTipText("");
+		table.addListener(SWT.Dispose, TableListener);
+    	table.addListener(SWT.KeyDown, TableListener);
+    	table.addListener(SWT.MouseMove, TableListener);
+    	table.addListener(SWT.MouseHover, TableListener);
+		setTmpData("set",true);
+	}
 
 	return item;
 }
@@ -616,4 +692,38 @@ function dispMemoryInfo(){
 		"Total=" + f1.format(total) + "," +
     	"Used Memory=" + f1.format(used) + " (" + f2.format(ratio) + "%)," +
     	"Max Can Use Memory="+f1.format(max));
+}
+
+function getColumnIndex(pt,item){
+	var columns = item.getParent().getColumnCount();
+	return IntStream.range(0,columns).filter(function(index){
+		var rect = item.getBounds(index);
+		return pt.x >= rect.x && pt.x < rect.x + rect.width;
+	}).findFirst().orElse(-1);
+}
+
+function getItemName(index,ship){
+	var itemDto;
+	switch(index){
+		case itemType1Index:
+			itemDto = ship.data.item2.get(0);
+			break;
+		case itemType2Index: 
+			itemDto = ship.data.item2.get(1);
+			break;
+		case itemType3Index: 
+			itemDto = ship.data.item2.get(2);
+			break;
+		case itemType4Index: 
+			itemDto = ship.data.item2.get(3);
+			break;
+		//case itemType5Index: 
+		//	itemDto = ship.data.item2.get(4);
+		//	break;
+		case itemTypeExIndex: 
+			itemDto = ship.data.slotExItem;
+			break;
+		default: return null;
+	}
+	return itemDto instanceof ItemDto ? itemDto.name : null;
 }
