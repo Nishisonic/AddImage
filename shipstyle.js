@@ -293,6 +293,7 @@ function create(table, data, index) {
 				itemIconImageList.add(null);
 			}
 		});
+		var hpProgress = getProgress()
 		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
 	} else { //新規艦取得時限定…多分
 		var shipImage = getSynthesisShipImage(ship);
@@ -348,22 +349,16 @@ function create(table, data, index) {
         }
 	});
 	
-	var LabelListener = new Listener({
-		handleEvent : function(event){
-			var _label = Label.class.cast(event.widget);
-			var shell1 = label.getShell();
-			switch (event.type){
-				case SWT.MouseDown:
-					var e = new Event();
-					e.item = TableItem.class.cast(_label.getData("_TABLEITEM"));
-					table.notifyListeners(SWT.Selection, e);
-					shell1.dispose();
-					table.setFocus();
-					break;
-				case SWT.MouseExit:
-					shell1.dispose();
-					break;
-			}
+	var LabelListener = new Listener(function(event){
+		var shell = label.getShell();
+		switch (event.type){
+			case SWT.MouseDown:
+				var e = new Event();
+				e.item = TableItem.class.cast(label.getData("_TABLEITEM"));
+				table.notifyListeners(SWT.Selection, e);
+				table.setFocus();
+			case SWT.MouseExit:
+				shell.dispose();
 		}
 	});
 
@@ -732,6 +727,39 @@ function getItemName(index,ship){
 	return itemDto instanceof ItemDto ? itemDto.name : null;
 }
 
-function getProgress(color,value,max){
+function getProgress(gc,value,max,color){
 
 }
+
+var paintHandler = new Listener(function(event) {
+	var gc = event.gc;
+	var old = gc.background;
+	var d = event.item.data;
+	var backcolor = null;
+	// 背景を描く
+	if(event.index == categoryIndex) {
+		backcolor = d.cat;
+	}
+	else if(event.index == stateIndex) {
+		backcolor = d.state;
+	}
+	if(backcolor == null) {
+		backcolor = d.back;
+	}
+	if(backcolor != null) {
+		gc.background = backcolor;
+		gc.fillRectangle(event.x, event.y, event.width, event.height);
+	}
+	// 進捗を描く
+	if(event.index == progressIndex) {
+		if(d.prog != null) {
+			gc.background = d.prog;
+			// バーを下 1/5 に表示する
+			var y = event.y + event.height * 4 / 5;
+			// はみ出した部分はクリッピングされるので高さはそのままでいい
+			gc.fillRectangle(event.x, y, event.width * d.rate, event.height);
+		}
+	}
+	gc.background = old;
+	event.detail &= ~SWT.BACKGROUND;
+});
