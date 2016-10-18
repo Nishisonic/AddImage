@@ -298,7 +298,7 @@ function create(table, data, index) {
 		var shipImage = getSynthesisShipImage(ship);
 		var itemIconImageList = new ArrayList(); //取得しているか曖昧なので空で作成
 		Collections.addAll(itemIconImageList, null, null, null, null, null, null); //1~5スロ目+補強増設分
-		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList); 
+		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList,null,null,null,null,null,null); 
 	}
 	if(paintDtoMap instanceof Map) paintDtoMap.put(id,paintDto);
 
@@ -730,4 +730,8 @@ function getItemName(index,ship){
 		default: return null;
 	}
 	return itemDto instanceof ItemDto ? itemDto.name : null;
+}
+
+function getProgress(color,value,max){
+
 }
