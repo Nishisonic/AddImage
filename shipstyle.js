@@ -313,41 +313,39 @@ function create(table, data, index) {
 
 	//ツールチップ処理
 
-	var TableListener = new Listener({
-    	handleEvent : function(event) {
-   		    switch (event.type) {
-        		case SWT.Dispose:
-        		case SWT.KeyDown:
-        		case SWT.MouseMove: {
-        			if (tip == null) break;
-         			tip.dispose();
-          			tip = null;
-          			label = null;
-          			break;
-        		}
-	        	case SWT.MouseHover: {
-					var point = new Point(event.x, event.y);
-    	    		var _ship = table.getItem(point);
-					var columnIndex = getColumnIndex(point,_ship);
+	var TableListener = new Listener(function(event) {
+		switch (event.type) {
+			case SWT.Dispose:
+			case SWT.KeyDown:
+			case SWT.MouseMove: {
+				if (tip == null) break;
+				tip.dispose();
+				tip = null;
+				label = null;
+				break;
+			}
+			case SWT.MouseHover: {
+				var point = new Point(event.x, event.y);
+				var _ship = table.getItem(point);
+				var columnIndex = getColumnIndex(point,_ship);
+				var itemName = getItemName(columnIndex,_ship);
+				if (_ship != null && itemName != null) {
+					if (tip != null && !tip.isDisposed()) tip.dispose();
+					tip = new Shell(table.getShell(), SWT.ON_TOP | SWT.TOOL);
+					tip.setLayout(new FillLayout());
+					label = new Label (tip, SWT.NONE);
+					label.setData ("_TABLEITEM", _ship);
 					var itemName = getItemName(columnIndex,_ship);
-        			if (_ship != null && itemName != null) {
-       	     			if (tip != null && !tip.isDisposed()) tip.dispose();
-        	   			tip = new Shell(table.getShell(), SWT.ON_TOP | SWT.TOOL);
-						tip.setLayout(new FillLayout());
-						label = new Label (tip, SWT.NONE);
-						label.setData ("_TABLEITEM", _ship);
-						var itemName = getItemName(columnIndex,_ship);
-						label.setText (getItemName(columnIndex,_ship));
-						label.addListener (SWT.MouseExit, LabelListener);
-						label.addListener (SWT.MouseDown, LabelListener);
-						var size = tip.computeSize (SWT.DEFAULT, SWT.DEFAULT);
-						var pt = table.toDisplay (event.x, event.y);
-						tip.setBounds (pt.x + 15, pt.y + 5, size.x, size.y);
-						tip.setVisible (true);
-       				}
-        		}
-        	}
-		}
+					label.setText (getItemName(columnIndex,_ship));
+					label.addListener (SWT.MouseExit, LabelListener);
+					label.addListener (SWT.MouseDown, LabelListener);
+					var size = tip.computeSize (SWT.DEFAULT, SWT.DEFAULT);
+					var pt = table.toDisplay (event.x, event.y);
+					tip.setBounds (pt.x + 15, pt.y + 5, size.x, size.y);
+					tip.setVisible (true);
+				}
+			}
+        }
 	});
 	
 	var LabelListener = new Listener({
