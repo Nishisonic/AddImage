@@ -369,13 +369,13 @@ function create(table, data, index) {
 		}
 	});
 
-	if(typeof getData("set") !== 'boolean'){
+	if(typeof getData(shipTable + "_set") !== 'boolean'){
 		table.setToolTipText("");
 		table.addListener(SWT.Dispose, TableListener);
     	table.addListener(SWT.KeyDown, TableListener);
     	table.addListener(SWT.MouseMove, TableListener);
     	table.addListener(SWT.MouseHover, TableListener);
-		setTmpData("set",true);
+		setTmpData(shipTable + "_set",true);
 	}
 
 	return item;
