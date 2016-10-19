@@ -334,17 +334,17 @@ function create(table, data, index) {
 			}
 			case SWT.MouseHover: {
 				var point = new Point(event.x, event.y);
-				var _ship = table.getItem(point);
-				var columnIndex = getColumnIndex(point,_ship);
-				var itemName = getItemName(columnIndex,_ship);
-				if (_ship != null && itemName != null) {
+				var item = table.getItem(point);
+				var columnIndex = getColumnIndex(point,item);
+				var itemName = getItemName(columnIndex,item);
+				if (item != null && itemName != null) {
 					if (tip != null && !tip.isDisposed()) tip.dispose();
 					tip = new Shell(table.getShell(), SWT.ON_TOP | SWT.TOOL);
 					tip.setLayout(new FillLayout());
 					label = new Label (tip, SWT.NONE);
-					label.setData ("_TABLEITEM", _ship);
-					var itemName = getItemName(columnIndex,_ship);
-					label.setText (getItemName(columnIndex,_ship));
+					label.setData ("_TABLEITEM", item);
+					var itemName = getItemName(columnIndex,item);
+					label.setText (getItemName(columnIndex,item));
 					label.addListener (SWT.MouseExit, LabelListener);
 					label.addListener (SWT.MouseDown, LabelListener);
 					var size = tip.computeSize (SWT.DEFAULT, SWT.DEFAULT);
@@ -704,11 +704,14 @@ function dispMemoryInfo(){
 }
 
 function getColumnIndex(pt,item){
-	var columns = item.getParent().getColumnCount();
-	return IntStream.range(0,columns).filter(function(index){
-		var rect = item.getBounds(index);
-		return pt.x >= rect.x && pt.x < rect.x + rect.width;
-	}).findFirst().orElse(-1);
+	if(item instanceof TableItem){
+		var columns = item.getParent().getColumnCount();
+		return IntStream.range(0,columns).filter(function(index){
+			var rect = item.getBounds(index);
+			return pt.x >= rect.x && pt.x < rect.x + rect.width;
+		}).findFirst().orElse(-1);
+	}
+	return -1;
 }
 
 function getItemName(index,ship){
