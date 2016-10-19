@@ -98,17 +98,16 @@ var LV_COLOR               = [new RGB(255,255,255),
 							  new RGB( 69,169,165),
 							  new RGB( 69,169,165),
 							];
-var HP_PROGRESS_COLOR     = {UNDAMEGED:AppConstants.MUKIZU_SHIP_COLOR[0],
-							 SLIGHT_DAMAGE:AppConstants.SYOHA_SHIP_COLOR[0],
-							 HALF_DAMAGE:AppConstants.TYUHA_SHIP_COLOR[0],
-							 BADLY_DAMAGE:AppConstants.TAIHA_SHIP_COLOR[0],
-							 SUNK:AppConstants.SUNK_SHIP_COLOR,
+var HP_PROGRESS_COLOR     = {GAUGE_EMPTY:new RGB(0xff, 0, 0),
+							 GAUGE_HALF:new RGB(0xff, 0xd7, 0),
+							 GAUGE_FULL:new RGB(0, 0xd7, 0),
 							};
-var FUEL_PROGRESS_COLOR   = new RGB(0x00, 0x80, 0x00);
-var AMMO_PROGRESS_COLOR   = new RGB(0x66, 0x33, 0x00);
-var LV_PROGRESS_COLOR     = new RGB(0, 114, 178);
-var NEXT_PROGRESS_COLOR   = new RGB(0, 114, 178);
-var EXP_PROGRESS_COLOR    = new RGB(0, 114, 178);
+var FUEL_PROGRESS_COLOR   = new RGB(0x00, 0x60, 0x00);
+var AMMO_PROGRESS_COLOR   = new RGB(0x56, 0x23, 0x00);
+//var LV_PROGRESS_COLOR     = new RGB(0, 0x80, 0xff);
+var NEXT_PROGRESS_COLOR   = new RGB(0, 0x80, 0xff);
+var EXP_PROGRESS_COLOR    = {MARRIED:new RGB(0xff, 0x80, 0),
+							 NOT_MARRIED:new RGB(0, 0x80, 0xff)};
 //列番号
 var condIndex       = 12;
 var picIndex        = -1;
@@ -121,7 +120,7 @@ var itemTypeExIndex = -1;
 var hpIndex         = -1;
 var fuelIndex       = -1;
 var ammoIndex       = -1;
-var lvIndex         = -1;
+//var lvIndex         = -1;
 var nextIndex       = -1;
 var expIndex        = -1;
 //変数
@@ -209,7 +208,7 @@ function begin(header) {
 		if (header[i].equals("HP"))              hpIndex = i;
 		if (header[i].equals("燃料#現在の燃料")) fuelIndex = i;
 		if (header[i].equals("弾薬#現在の弾薬")) ammoIndex = i;
-		if (header[i].equals("Lv"))              lvIndex = i;
+		//if (header[i].equals("Lv"))              lvIndex = i;
 		if (header[i].equals("Next"))            nextIndex = i;
 		if (header[i].equals("経験値"))          expIndex = i;
 	}
@@ -226,6 +225,7 @@ function getTableCondColor(cond) {
 }
 
 function create(table, data, index) {
+	if(index == 0) setTableListener(table);
 	// 艦娘
 	var ship = data[0].get();
 	
@@ -377,7 +377,7 @@ function create(table, data, index) {
     	table.addListener(SWT.KeyDown, TableListener);
     	table.addListener(SWT.MouseMove, TableListener);
     	table.addListener(SWT.MouseHover, TableListener);
-		table.addListener(SWT.EraseItem, PaintHandler);
+		//table.addListener(SWT.EraseItem, PaintHandler);
 		setTmpData("set",true);
 	}
 
@@ -739,17 +739,28 @@ function getItemName(index,ship){
 
 
 var PaintHandler = new Listener(function(event) {
+	var ship = event.item.data;
+	var rate = function(index){
+		switch(index){
+			case hpIndex:   return ship.nowhp / ship.maxhp;
+			case fuelIndex: return ship.fuel / ship.fuelMax;
+			case ammoIndex: return ship.bull / ship.bullMax;
+			//case lvIndex:   return ship.lv > 99 ? ship.lv / 155 : ship.lv / 99;
+			case nextIndex: return ship.expraito;
+			case expIndex:  return ship.lv > 99 ? ship.exp / 4470000 : ship.exp / 1000000;
+			default:        return null;
+		}
+	}(event.index);
 	var gc = event.gc;
-	var old = gc.background;
 	// 背景を描く
 	var bgColor = function(index){
 		switch(index){
-			case hpIndex:   return SWTResourceManager.getColor(HP_PROGRESS_COLOR);
+			case hpIndex:   return SWTResourceManager.getColor(gradation(rate,[HP_PROGRESS_COLOR.GAUGE_EMPTY,HP_PROGRESS_COLOR.GAUGE_HALF,HP_PROGRESS_COLOR.GAUGE_FULL]));
 			case fuelIndex: return SWTResourceManager.getColor(FUEL_PROGRESS_COLOR);
 			case ammoIndex: return SWTResourceManager.getColor(AMMO_PROGRESS_COLOR);
-			case lvIndex:   return SWTResourceManager.getColor(LV_PROGRESS_COLOR);
+			//case lvIndex:   return SWTResourceManager.getColor(LV_PROGRESS_COLOR);
 			case nextIndex: return SWTResourceManager.getColor(NEXT_PROGRESS_COLOR);
-			case expIndex:  return SWTResourceManager.getColor(EXP_PROGRESS_COLOR);
+			case expIndex:  return ship.lv > 99 ? SWTResourceManager.getColor(EXP_PROGRESS_COLOR.MARRIED) : SWTResourceManager.getColor(EXP_PROGRESS_COLOR.NOT_MARRIED);
 			default:        return null;
 		}
 	}(event.index);
@@ -760,8 +771,46 @@ var PaintHandler = new Listener(function(event) {
 		gc.setBackground(bgColor);
 		var y = event.y + event.height * 4 / 5;
 		// はみ出した部分はクリッピングされるので高さはそのままでいい
-		gc.fillRectangle(event.x, y, event.width, event.height);
+		gc.fillRectangle(event.x, y, event.width * rate, event.height);
 	}
-	gc.setBackground(old);
-	event.detail &= ~SWT.BACKGROUND;
 });
+
+/**
+ * 複数の色の中間色を取得する(nashorn用に改造)
+ */
+function gradation(raito, start, end) {
+	if(end === undefined){
+		var rgbs = start;
+		if (raito <= 0.0) {
+			return rgbs[0];
+		}
+		if (raito >= 1.0) {
+			return rgbs[rgbs.length - 1];
+		}
+		var length = rgbs.length - 1;
+
+		// 開始色
+		var start = Math.floor(length * raito);
+		// 終了色
+		var end = start + 1;
+		// 開始色と終了色の割合を算出
+		var startPer = start / length;
+		var endPer =  end / length;
+		var subPer = (raito - startPer) / (endPer - startPer);
+		return gradation(subPer, rgbs[start], rgbs[end]);
+	} else {
+		var r = Math.floor(start.red + ((end.red - start.red) * raito));
+		var g = Math.floor(start.green + ((end.green - start.green) * raito));
+		var b = Math.floor(start.blue + ((end.blue - start.blue) * raito));
+		return new RGB(r|0, g|0, b|0);
+	}
+}
+
+function setTableListener(table){
+	listener = getData("phandler");
+	if(listener != null) {
+		table.removeListener(SWT.EraseItem, listener);
+	}
+	table.addListener(SWT.EraseItem, PaintHandler);
+	setTmpData("phandler", PaintHandler);
+}
