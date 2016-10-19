@@ -8,6 +8,7 @@
 
 load("script/ScriptData.js");
 
+Color              = Java.type("org.eclipse.swt.graphics.Color");
 Display            = Java.type("org.eclipse.swt.widgets.Display");
 Event              = Java.type("org.eclipse.swt.widgets.Event");
 FillLayout         = Java.type("org.eclipse.swt.layout.FillLayout");
@@ -443,7 +444,7 @@ function getSynthesisItemIconImage(item2,width,height){
 			case 7: return ">>";
     	}
 	}(alv);
-	var alvColor = SWTResourceManager.getColor(LV_COLOR[alv]);
+	var alvColor = SWTResourceManager.getColor(ALV_COLOR[alv]);
 	var lv = item2.level; //改修値
 	var lvText = function(lv){ //即時関数
 		switch(lv){
@@ -770,7 +771,7 @@ var PaintHandler = new Listener(function(event) {
 		}
 	}(event.index);
 
-	if(bgColor != null){
+	if(bgColor instanceof Color){
 		// 進捗を描く
 		// バーを下 1/5 に表示する
 		gc.setBackground(bgColor);
@@ -815,7 +816,7 @@ function gradation(raito, start, end) {
 
 function setTableListener(table){
 	listener = getData("phandler");
-	if(listener != null) {
+	if(listener instanceof Listener) {
 		table.removeListener(SWT.EraseItem, listener);
 	}
 	table.addListener(SWT.EraseItem, PaintHandler);
