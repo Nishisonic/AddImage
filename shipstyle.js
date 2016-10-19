@@ -425,7 +425,6 @@ function getSynthesisShipImage(ship,width,height){
 function getSynthesisItemIconImage(item2,width,height){
 	var width = typeof width !== 'undefined' ?  width : IMAGE_SIZE.WIDTH;
 	var height = typeof height !== 'undefined' ?  height : IMAGE_SIZE.HEIGHT;
-	var font = SWTResourceManager.getFont("Arial", 7, SWT.NORMAL);
 	var itemIconImage = getItemIconImage(item2.type3);
 	var alv = item2.alv; //熟練度
 	var alvText = function(alv){ //即時関数
@@ -440,7 +439,8 @@ function getSynthesisItemIconImage(item2,width,height){
 			case 7: return ">>";
     	}
 	}(alv);
-	var alvColor = SWTResourceManager.getColor(LV_COLOR[alv]);
+	var alvFont = SWTResourceManager.getFont("Arial", 7, SWT.BOLD);
+	var alvColor = SWTResourceManager.getColor(ALV_COLOR[alv]);
 	var lv = item2.level; //改修値
 	var lvText = function(lv){ //即時関数
 		switch(lv){
@@ -457,6 +457,7 @@ function getSynthesisItemIconImage(item2,width,height){
 			case 10:return "★ma x";
     	}
 	}(lv);
+	var lvFont = SWTResourceManager.getFont("Arial", 7, SWT.NORMAL);
 	var lvColor = SWTResourceManager.getColor(LV_COLOR[lv]);
 	//合成処理
 	var scaled = new Image(Display.getDefault(), width, height);
@@ -464,9 +465,10 @@ function getSynthesisItemIconImage(item2,width,height){
 	gc.setAntialias(SWT.ON);
 	gc.setInterpolation(SWT.HIGH);
 	gc.drawImage(itemIconImage, 0, 0, itemIconImage.getBounds().width, itemIconImage.getBounds().height, 0, 0, width, height);
-    gc.setFont(font);
+    gc.setFont(alvFont);
 	gc.setForeground(alvColor);
 	gc.drawString(alvText, 23, 0);
+    gc.setFont(lvFont);
 	gc.setForeground(lvColor);
 	gc.drawString(lvText, 21, 10);
 	gc.dispose();
