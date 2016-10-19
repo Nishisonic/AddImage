@@ -371,14 +371,14 @@ function create(table, data, index) {
 
 	item.setData(ship);
 
-	if(typeof getData("set") !== 'boolean'){
+	if(typeof getData(shipTable + "_set") !== 'boolean'){
 		table.setToolTipText("");
 		table.addListener(SWT.Dispose, TableListener);
     	table.addListener(SWT.KeyDown, TableListener);
     	table.addListener(SWT.MouseMove, TableListener);
     	table.addListener(SWT.MouseHover, TableListener);
 		//table.addListener(SWT.EraseItem, PaintHandler);
-		setTmpData("set",true);
+		setTmpData(shipTable + "_set",true);
 	}
 
 	return item;
@@ -743,6 +743,8 @@ function getItemName(index,ship){
 
 var PaintHandler = new Listener(function(event) {
 	var ship = event.item.data;
+	var gc = event.gc;
+	var old = gc.background;
 	var rate = function(index){
 		switch(index){
 			case hpIndex:   return ship.nowhp / ship.maxhp;
@@ -754,8 +756,8 @@ var PaintHandler = new Listener(function(event) {
 			default:        return null;
 		}
 	}(event.index);
-	var gc = event.gc;
 	// 背景を描く
+	// 進捗バーを消す場合、下のcase文を消すことで非表示に出来る
 	var bgColor = function(index){
 		switch(index){
 			case hpIndex:   return SWTResourceManager.getColor(gradation(rate,[HP_PROGRESS_COLOR.GAUGE_EMPTY,HP_PROGRESS_COLOR.GAUGE_HALF,HP_PROGRESS_COLOR.GAUGE_FULL]));
@@ -776,6 +778,8 @@ var PaintHandler = new Listener(function(event) {
 		// はみ出した部分はクリッピングされるので高さはそのままでいい
 		gc.fillRectangle(event.x, y, event.width * rate, event.height);
 	}
+	gc.setBackground(old);
+	event.detail &= ~SWT.BACKGROUND;
 });
 
 /**
