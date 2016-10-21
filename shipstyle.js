@@ -1,7 +1,7 @@
 /*
- * 画像追加 Ver2.0.6
+ * 画像追加 Ver2.0.6+
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2016/10/20
+ * LastUpdate:2016/10/22
  * 
  * 所有艦娘一覧に画像を追加します。
  */
@@ -398,7 +398,7 @@ function end() {
 			});
 		}
 		oldPaintDtoMap = null;
-		System.gc(); //Garbage Collection
+		gc(); //Garbage Collection
 		System.out.println("Complete.");
 	} catch(e) {
 		System.out.println("Failed.");
@@ -818,4 +818,14 @@ function setTableListener(table){
 	}
 	table.addListener(SWT.EraseItem, PaintHandler);
 	setTmpData("phandler", PaintHandler);
+}
+
+function gc(){
+    var free = Runtime.getRuntime().freeMemory() / 1024;
+    var total = Runtime.getRuntime().totalMemory() / 1024;
+    var max = Runtime.getRuntime().maxMemory() / 1024;
+    var used = total - free;
+    var ratio = used * 100 / total;
+    
+	if(ratio > 80) System.gc();
 }
