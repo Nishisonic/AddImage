@@ -398,6 +398,7 @@ function end() {
 			});
 		}
 		oldPaintDtoMap = null;
+		System.gc(); //Garbage Collection
 		System.out.println("Complete.");
 	} catch(e) {
 		System.out.println("Failed.");
