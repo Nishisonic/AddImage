@@ -307,7 +307,7 @@ function create(table, data, index) {
 		var shipImage = getSynthesisShipImage(ship);
 		var itemIconImageList = new ArrayList(); //取得しているか曖昧なので空で作成
 		Collections.addAll(itemIconImageList, null, null, null, null, null, null); //1~5スロ目+補強増設分
-		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList,null,null,null,null,null,null); 
+		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
 	}
 	if(paintDtoMap instanceof Map) paintDtoMap.put(id,paintDto);
 
@@ -660,16 +660,10 @@ function getItemIconImage(type3){
  * @param shipImage org.eclipse.swt.graphics.Image
  * @param itemIconList java.util.List<org.eclipse.swt.graphics.Image>(5)
  */
-var PaintDto = function(shipDtoEx,shipImage,itemIconList,hpProgress,fuelProgress,ammoProgress,lvProgress,nextProgress,expProgress){
+var PaintDto = function(shipDtoEx,shipImage,itemIconList){
 	this.ShipDtoEx    = shipDtoEx;
 	this.ShipImage    = shipImage;
 	this.ItemIconList = itemIconList;
-	this.HpProgress   = hpProgress;
-	this.FuelProgress = fuelProgress;
-	this.AmmoProgress = ammoProgress;
-	this.LvProgress   = lvProgress;
-	this.NextProgress = nextProgress;
-	this.ExpProgress  = expProgress;
 };
 
 PaintDto.prototype.dispose = function(){
@@ -679,7 +673,7 @@ PaintDto.prototype.dispose = function(){
 	}).forEach(function(itemIcon){
 		itemIcon.dispose();
 	});
-	this.ShipDtoEx = this.ShipImage = this.ItemIconList = this.HpProgress = this.FuelProgress = this.AmmoProgress = this.LvProgress = this.NextProgress = this.ExpProgress = null;
+	this.ShipDtoEx = this.ShipImage = this.ItemIconList = null;
 };
 
 function ShipDtoEx(shipDto,isMission,isNdock){
