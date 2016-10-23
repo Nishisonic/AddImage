@@ -40,7 +40,6 @@ Map                = Java.type("java.util.Map");
 Paths              = Java.type("java.nio.file.Paths");
 PrintWriter        = Java.type("java.io.PrintWriter");
 Runtime            = Java.type("java.lang.Runtime");
-StandardCharsets   = Java.type("java.nio.charset.StandardCharsets");
 StandardOpenOption = Java.type("java.nio.file.StandardOpenOption");
 System             = Java.type("java.lang.System");
 URL                = Java.type("java.net.URL");
@@ -147,7 +146,7 @@ function begin(header) {
 	startTime = System.currentTimeMillis();
 	missionShips = GlobalContext.getMissionShipSet();
 	ndockShips = GlobalContext.getNDockShipSet();
-	System.out.print("Image Loading...");
+	//System.out.print("Image Loading...");
 	if(!getData("isLoaded")){ //nullはfalse
 		System.out.println("Start.");
 		var shipLayerImageDir  = new File(SHIP_LAYER_IMAGE_DIR);
@@ -202,7 +201,7 @@ function begin(header) {
 		setTmpData("isLoaded",true);
 		System.out.println("Image Loading...Complete.");
 	} else {
-		System.out.println("Already.");
+		//System.out.println("Already.");
 	}
 	for (var i = 0; i < header.length; ++i) {
 		if (header[i].equals("疲労"))            condIndex = i;
@@ -295,6 +294,7 @@ function create(table, data, index) {
 		shipDtoEx = new ShipDtoEx(null,missionShips.contains(id),ndockShips.contains(id));
 	}
 	var paintDto;
+	if(id == 31232) print(id + "," + (oldPaintDtoMap instanceof Map) + "," + (oldPaintDtoMap instanceof Map ? oldPaintDtoMap.containsKey(id) : false) + "," + ((oldPaintDtoMap instanceof Map && oldPaintDtoMap.containsKey(id)) ? oldPaintDtoMap.get(id).ShipDtoEx.equals(shipDtoEx) : false) + "," + oldPaintDtoMap.size()); //一時的対処
 	if(oldPaintDtoMap instanceof Map && oldPaintDtoMap.containsKey(id) && oldPaintDtoMap.get(id).ShipDtoEx.equals(shipDtoEx)){
 		paintDto = oldPaintDtoMap.get(id);
 		oldPaintDtoMap.remove(id);
@@ -316,8 +316,8 @@ function create(table, data, index) {
 		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
 	}
 	if(paintDtoMap instanceof Map) paintDtoMap.put(id,paintDto);
-	paintDto.debug(id,other);
-	
+	paintDto.debug(id,other); //一時的対処
+
 	//画像を貼り付ける
 	item.setImage(picIndex, paintDto.ShipImage);
 	item.setImage(itemType1Index, paintDto.ItemIconList.get(0));
@@ -393,21 +393,22 @@ function create(table, data, index) {
 }
 
 function end() {
-	System.out.print("Image Dispose...");
+	//System.out.print("Image Dispose...");
 	//次回読み込み短縮のために一時保存
 	if(shipTable instanceof ShipTable) setTmpData(shipTable + "_PaintDtoMap",paintDtoMap);
 	//残った分を廃棄 (こうしないとメモリ不足になって落ちる)
 	if(oldPaintDtoMap instanceof Map){
+		print("end phase->" + oldPaintDtoMap.size() + "," + oldPaintDtoMap.keySet());
 		oldPaintDtoMap.forEach(function(id,paintDto){
 			paintDto.dispose();
 			paintDto.debug(id,"Dispose");
-			//paintDto = null;
+			paintDto = null;
 		});
 	}
-	//oldPaintDtoMap = null;
-	System.out.println("Complete.");
-	System.out.println("Loading Time ->" + (System.currentTimeMillis() - startTime) + "ms.");
-	dispMemoryInfo();
+	oldPaintDtoMap = null;
+	//System.out.println("Complete.");
+	//System.out.println("Loading Time ->" + (System.currentTimeMillis() - startTime) + "ms.");
+	//dispMemoryInfo();
 }
 
 function getSynthesisShipImage(ship,width,height){
