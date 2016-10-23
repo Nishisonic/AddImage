@@ -290,20 +290,20 @@ function create(table, data, index) {
 	if(oldPaintDtoMap instanceof Map && oldPaintDtoMap.containsKey(id) && oldPaintDtoMap.get(id).ShipDtoEx.equals(shipDtoEx)){
 		paintDto = oldPaintDtoMap.get(id);
 		oldPaintDtoMap.remove(id);
-	} else if(shipDtoEx.ShipDto instanceof ShipDto) {
+	} else {
 		var shipImage = getSynthesisShipImage(ship);
-		var item2List = new ArrayList(shipDtoEx.ShipDto.item2);
-		item2List.add(shipDtoEx.ShipDto.slotExItem);
 		var itemIconImageList = new ArrayList();
-		item2List.forEach(function(item2){
-			itemIconImageList.add(getSynthesisItemIconImage(item2));
-		});
-		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
-	} else { //新規艦取得時限定…多分
-		var shipImage = getSynthesisShipImage(ship);
-		var itemIconImageList = new ArrayList(); //取得しているか曖昧なので空で作成
-		Collections.addAll(itemIconImageList, null, null, null, null, null, null); //1~5スロ目+補強増設分
-		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
+		if(shipDtoEx.ShipDto instanceof ShipDto) {
+			var item2List = new ArrayList(shipDtoEx.ShipDto.item2);
+			item2List.add(shipDtoEx.ShipDto.slotExItem);
+			item2List.forEach(function(item2){
+				itemIconImageList.add(getSynthesisItemIconImage(item2));
+			});
+			paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
+		} else { //新規艦取得時限定…多分
+			Collections.addAll(itemIconImageList, null, null, null, null, null, null); //1~5スロ目+補強増設分
+			paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
+		}
 	}
 	if(paintDtoMap instanceof Map) paintDtoMap.put(id,paintDto);
 
