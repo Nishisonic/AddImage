@@ -1,13 +1,7 @@
-/*
-<<<<<<< HEAD
- * 画像追加 Ver2.0.5.6
- * Author:Nishisonic,Nekopanda
- * LastUpdate:2016/10/20
-=======
- * 画像追加 Ver2.0.7.5
+/**
+ * 画像追加 Ver2.0.8
  * Author:Nishisonic,Nekopanda
  * LastUpdate:2016/10/24
->>>>>>> develop
  * 
  * 所有艦娘一覧に画像を追加します。
  */
@@ -32,7 +26,6 @@ TableItem          = Java.type("org.eclipse.swt.widgets.TableItem");
 ArrayList          = Java.type("java.util.ArrayList");
 Arrays             = Java.type("java.util.Arrays");
 Collections        = Java.type("java.util.Collections");
-DecimalFormat      = Java.type("java.text.DecimalFormat");
 File               = Java.type("java.io.File");
 FilenameFilter     = Java.type("java.io.FilenameFilter");
 Files              = Java.type("java.nio.file.Files");
@@ -42,8 +35,6 @@ IntStream          = Java.type("java.util.stream.IntStream");
 LinkedHashSet      = Java.type("java.util.LinkedHashSet"); 
 Map                = Java.type("java.util.Map");
 Paths              = Java.type("java.nio.file.Paths");
-Runtime            = Java.type("java.lang.Runtime");
-System             = Java.type("java.lang.System");
 URL                = Java.type("java.net.URL");
 
 JsonObject         = Java.type("javax.json.JsonObject");
@@ -57,8 +48,6 @@ ShipDto            = Java.type("logbook.dto.ShipDto");
 ShipTable          = Java.type("logbook.gui.ShipTable");
 
 data_prefix = "ShipStyleImageVer2_";
-
-//var startTime;
 
 //定数
 var IMAGE_SIZE             = { WIDTH:80,HEIGHT:20 };
@@ -127,7 +116,7 @@ var itemTypeExIndex = -1;
 var hpIndex         = -1;
 var fuelIndex       = -1;
 var ammoIndex       = -1;
-//var lvIndex         = -1;
+//var lvIndex       = -1;
 var nextIndex       = -1;
 var expIndex        = -1;
 //変数
@@ -140,68 +129,48 @@ var label           = null;
 var missionShips;
 var ndockShips;
 
-var startTime;
-
 function begin(header) {
-	startTime = System.currentTimeMillis();
 	missionShips = GlobalContext.getMissionShipSet();
 	ndockShips = GlobalContext.getNDockShipSet();
-	System.out.print("Image Loading...");
 	if(!getData("isLoaded")){ //nullはfalse
-		System.out.println("Start.");
 		var shipLayerImageDir  = new File(SHIP_LAYER_IMAGE_DIR);
 		var shipNormalImageDir = new File(SHIP_NORMAL_IMAGE_DIR);
 		var shipDamageImageDir = new File(SHIP_DAMAGE_IMAGE_DIR);
 		var itemIconImageDir   = new File(ITEM_ICON_IMAGE_DIR);
-		System.out.print("Layer Loading...");
 		
 		if(shipLayerImageDir.exists()){
-			System.out.println("Complete.");
 			//レイヤー
 			Arrays.stream(shipLayerImageDir.listFiles(ImageFilter)).forEach(function(file){
 				setTmpData("LAYER_" + file.getName(),SWTResourceManager.getImage(file.toString()));
 			});
 		} else {
-			System.out.println("Failed.");
 			shipLayerImageDir.mkdirs();
 		}
-		System.out.print("Ship(Normal) Loading...");
 		if(shipNormalImageDir.exists()){
-			System.out.println("Complete.");
 			//通常
 			Arrays.stream(shipNormalImageDir.listFiles(ImageFilter)).forEach(function(file){
 				setTmpData("NORMAL_" + file.getName(),SWTResourceManager.getImage(file.toString()));
 			});
 		} else {
-			System.out.println("Failed.");
 			shipNormalImageDir.mkdirs();
 		}
-		System.out.print("Ship(Damage) Loading...");
 		if(shipDamageImageDir.exists()){
-			System.out.println("Complete.");
 			//損傷
 			Arrays.stream(shipDamageImageDir.listFiles(ImageFilter)).forEach(function(file){
 				setTmpData("DAMAGE_" + file.getName(),SWTResourceManager.getImage(file.toString()));
 			});
 		} else {
-			System.out.println("Failed.");
 			shipDamageImageDir.mkdirs();
 		}
-		System.out.print("ItemIcon Loading...");
 		if(itemIconImageDir.exists()){
-			System.out.println("Complete.");
 			//アイコン
 			Arrays.stream(itemIconImageDir.listFiles(ImageFilter)).forEach(function(file){
 				setTmpData("ITEM_ICON_" + file.getName(),SWTResourceManager.getImage(file.toString()));
 			});
 		} else {
-			System.out.println("Failed.");
 			itemIconImageDir.mkdirs();
 		}
 		setTmpData("isLoaded",true);
-		System.out.println("Image Loading...Complete.");
-	} else {
-		System.out.println("Already.");
 	}
 	for (var i = 0; i < header.length; ++i) {
 		if (header[i].equals("疲労"))            condIndex = i;
@@ -377,21 +346,15 @@ function create(table, data, index) {
 		}
 	});
 
-<<<<<<< HEAD
-=======
 	item.setData(ship);
 
->>>>>>> develop
 	if(typeof getData(shipTable + "_set") !== 'boolean'){
 		table.setToolTipText("");
 		table.addListener(SWT.Dispose, TableListener);
     	table.addListener(SWT.KeyDown, TableListener);
     	table.addListener(SWT.MouseMove, TableListener);
     	table.addListener(SWT.MouseHover, TableListener);
-<<<<<<< HEAD
-=======
 		//table.addListener(SWT.EraseItem, PaintHandler);
->>>>>>> develop
 		setTmpData(shipTable + "_set",true);
 	}
 
@@ -399,7 +362,6 @@ function create(table, data, index) {
 }
 
 function end() {
-	System.out.print("Image Dispose...");
 	//次回読み込み短縮のために一時保存
 	if(shipTable instanceof ShipTable) setTmpData(shipTable + "_PaintDtoMap",paintDtoMap);
 	//残った分を廃棄 (こうしないとメモリ不足になって落ちる)
@@ -410,9 +372,6 @@ function end() {
 		});
 	}
 	//oldPaintDtoMap = null;
-	System.out.println("Complete.");
-	System.out.println("Loading Time ->" + (System.currentTimeMillis() - startTime) + "ms.");
-	dispMemoryInfo();
 }
 
 function getSynthesisShipImage(ship,width,height){
@@ -522,26 +481,14 @@ var ImageFilter = new FilenameFilter(function(dir,name){
 });
 
 function getWebImage(uri,path){
-	try{
-		var url = new URL(uri);
-		System.out.println("Connect -> " + url.toString());
-		var urlConnection = HttpURLConnection.class.cast(url.openConnection());
-		urlConnection.connect();
-		System.out.println("HTTP Status Code:" + urlConnection.getResponseCode());
-		System.out.print("Data Acquisition...");
-		if(urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK){
-			var file = Paths.get(path);
-			//元からファイルが無い前提なので上書き設定は無し
-			Files.copy(urlConnection.getInputStream(), file);
-			System.out.println("Complete.");
-			System.out.println("Save location ->" + file.toString());
-			return SWTResourceManager.getImage(file.toString());
-		} else {
-			System.out.print("Failed:");
-			System.out.println(urlConnection.getResponseMessage() + "(" + urlConnection.getResponseCode() + ").");
-		}
-	} catch(e) {
-		e.printStackTrace();
+	var url = new URL(uri);
+	var urlConnection = HttpURLConnection.class.cast(url.openConnection());
+	urlConnection.connect();
+	if(urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK){
+		var file = Paths.get(path);
+		//元からファイルが無い前提なので上書き設定は無し
+		Files.copy(urlConnection.getInputStream(), file);
+		return SWTResourceManager.getImage(file.toString());
 	}
 	return null;
 }
@@ -696,20 +643,6 @@ ShipDtoEx.prototype.equals = function(shipDtoEx){
 	return this.ShipDto instanceof ShipDto && this.ShipDto.equals(shipDtoEx.ShipDto) && this.isMission == shipDtoEx.isMission && this.isNdock == shipDtoEx.isNdock;
 };
 
-function dispMemoryInfo(){
-    var f1 = new DecimalFormat("#,###KB");
-    var f2 = new DecimalFormat("##.#");
-    var free = Runtime.getRuntime().freeMemory() / 1024;
-    var total = Runtime.getRuntime().totalMemory() / 1024;
-    var max = Runtime.getRuntime().maxMemory() / 1024;
-    var used = total - free;
-    var ratio = used * 100 / total;
-    System.out.println("Java Memory Info : " + 
-		"Total=" + f1.format(total) + "," +
-    	"Used Memory=" + f1.format(used) + " (" + f2.format(ratio) + "%)," +
-    	"Max Can Use Memory="+f1.format(max));
-}
-
 function getColumnIndex(pt,item){
 	if(item instanceof TableItem){
 		var columns = item.getParent().getColumnCount();
@@ -757,7 +690,7 @@ var PaintHandler = new Listener(function(event) {
 			case hpIndex:   return ship.nowhp / ship.maxhp;
 			case fuelIndex: return ship.fuel / ship.fuelMax;
 			case ammoIndex: return ship.bull / ship.bullMax;
-			//case lvIndex:   return ship.lv > 99 ? ship.lv / 155 : ship.lv / 99;
+			//case lvIndex: return ship.lv > 99 ? ship.lv / 155 : ship.lv / 99;
 			case nextIndex: return ship.expraito;
 			case expIndex:  return ship.lv > 99 ? ship.exp / 4470000 : ship.exp / 1000000;
 			default:        return null;
@@ -770,7 +703,7 @@ var PaintHandler = new Listener(function(event) {
 			case hpIndex:   return SWTResourceManager.getColor(gradation(rate,[HP_PROGRESS_COLOR.GAUGE_EMPTY,HP_PROGRESS_COLOR.GAUGE_HALF,HP_PROGRESS_COLOR.GAUGE_FULL]));
 			case fuelIndex: return SWTResourceManager.getColor(FUEL_PROGRESS_COLOR);
 			case ammoIndex: return SWTResourceManager.getColor(AMMO_PROGRESS_COLOR);
-			//case lvIndex:   return SWTResourceManager.getColor(LV_PROGRESS_COLOR);
+			//case lvIndex: return SWTResourceManager.getColor(LV_PROGRESS_COLOR);
 			case nextIndex: return SWTResourceManager.getColor(NEXT_PROGRESS_COLOR);
 			case expIndex:  return ship.lv > 99 ? SWTResourceManager.getColor(EXP_PROGRESS_COLOR.MARRIED) : SWTResourceManager.getColor(EXP_PROGRESS_COLOR.NOT_MARRIED);
 			default:        return null;
