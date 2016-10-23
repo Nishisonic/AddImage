@@ -1,7 +1,7 @@
 /*
- * 画像追加 Ver2.0.6.5
+ * 画像追加 Ver2.0.7
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2016/10/22
+ * LastUpdate:2016/10/24
  * 
  * 所有艦娘一覧に画像を追加します。
  */
@@ -296,11 +296,7 @@ function create(table, data, index) {
 		item2List.add(shipDtoEx.ShipDto.slotExItem);
 		var itemIconImageList = new ArrayList();
 		item2List.forEach(function(item2){
-			if(item2 instanceof ItemDto){
-				itemIconImageList.add(getSynthesisItemIconImage(item2));
-			} else {
-				itemIconImageList.add(null);
-			}
+			itemIconImageList.add(getSynthesisItemIconImage(item2));
 		});
 		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
 	} else { //新規艦取得時限定…多分
@@ -387,27 +383,23 @@ function create(table, data, index) {
 
 function end() {
 	System.out.print("Image Dispose...");
-	try{
-		//次回読み込み短縮のために一時保存
-		if(shipTable instanceof ShipTable) setTmpData(shipTable + "_PaintDtoMap",paintDtoMap);
-		//残った分を廃棄 (こうしないとメモリ不足になって落ちる)
-		if(oldPaintDtoMap instanceof Map){
-			oldPaintDtoMap.forEach(function(id,paintDto){
-				paintDto.dispose();
-				paintDto = null;
-			});
-		}
-		oldPaintDtoMap = null;
-		System.out.println("Complete.");
-	} catch(e) {
-		System.out.println("Failed.");
-		e.printStackTrace();
+	//次回読み込み短縮のために一時保存
+	if(shipTable instanceof ShipTable) setTmpData(shipTable + "_PaintDtoMap",paintDtoMap);
+	//残った分を廃棄 (こうしないとメモリ不足になって落ちる)
+	if(oldPaintDtoMap instanceof Map){
+		oldPaintDtoMap.forEach(function(id,paintDto){
+			paintDto.dispose();
+			//paintDto = null;
+		});
 	}
+	//oldPaintDtoMap = null;
+	System.out.println("Complete.");
 	System.out.println("Loading Time ->" + (System.currentTimeMillis() - startTime) + "ms.");
 	dispMemoryInfo();
 }
 
 function getSynthesisShipImage(ship,width,height){
+	if(!(ship instanceof ShipDto)) return null;
 	var width = typeof width !== 'undefined' ?  width : IMAGE_SIZE.WIDTH;
 	var height = typeof height !== 'undefined' ?  height : IMAGE_SIZE.HEIGHT;
 	var shipImage = getShipImage(ship);
@@ -427,6 +419,7 @@ function getSynthesisShipImage(ship,width,height){
 }
 
 function getSynthesisItemIconImage(item2,width,height){
+	if(!(item2 instanceof ItemDto)) return null;
 	var width = typeof width !== 'undefined' ?  width : IMAGE_SIZE.WIDTH;
 	var height = typeof height !== 'undefined' ?  height : IMAGE_SIZE.HEIGHT;
 	var itemIconImage = getItemIconImage(item2.type3);
@@ -673,7 +666,7 @@ PaintDto.prototype.dispose = function(){
 	}).forEach(function(itemIcon){
 		itemIcon.dispose();
 	});
-	this.ShipDtoEx = this.ShipImage = this.ItemIconList = null;
+	//this.ShipDtoEx = this.ShipImage = this.ItemIconList = null;
 };
 
 function ShipDtoEx(shipDto,isMission,isNdock){
