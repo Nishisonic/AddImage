@@ -294,20 +294,20 @@ function create(table, data, index) {
 		var shipImage = getSynthesisShipImage(ship);
 		var itemIconImageList = new ArrayList();
 		if(shipDtoEx.ShipDto instanceof ShipDto) {
-			//たまに処理が上手くいかないことがあるので、ここである程度処理する
-			if(oldPaintDtoMap.containsKey(id)){
-				oldPaintDtoMap.get(id).dispose();
-				oldPaintDtoMap.remove(id);
-			}
 			var item2List = new ArrayList(shipDtoEx.ShipDto.item2);
 			item2List.add(shipDtoEx.ShipDto.slotExItem);
 			item2List.forEach(function(item2){
 				itemIconImageList.add(getSynthesisItemIconImage(item2));
 			});
 			paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
-		} else { //新規艦取得時限定…多分
+		} else { //新規艦取得時用
 			Collections.addAll(itemIconImageList, null, null, null, null, null, null); //1~5スロ目+補強増設分
 			paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
+		}
+		//たまに処理が上手くいかないことがあるので、ここである程度処理する
+		if(oldPaintDtoMap instanceof Map && oldPaintDtoMap.containsKey(id)){
+			oldPaintDtoMap.get(id).dispose();
+			oldPaintDtoMap.remove(id);
 		}
 	}
 	if(paintDtoMap instanceof Map) paintDtoMap.put(id,paintDto);
