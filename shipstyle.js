@@ -1,7 +1,7 @@
 /*
- * 画像追加 Ver2.0.6.5
+ * 画像追加 Ver2.0.6.5(debug)
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2016/10/22
+ * LastUpdate:2016/10/23
  * 
  * 所有艦娘一覧に画像を追加します。
  */
@@ -25,7 +25,9 @@ TableItem          = Java.type("org.eclipse.swt.widgets.TableItem");
 
 ArrayList          = Java.type("java.util.ArrayList");
 Arrays             = Java.type("java.util.Arrays");
+Charset            = Java.type("java.nio.charset.Charset");
 Collections        = Java.type("java.util.Collections");
+DateTimeFormatter  = Java.type("java.time.format.DateTimeFormatter");
 DecimalFormat      = Java.type("java.text.DecimalFormat");
 File               = Java.type("java.io.File");
 FilenameFilter     = Java.type("java.io.FilenameFilter");
@@ -36,9 +38,14 @@ IntStream          = Java.type("java.util.stream.IntStream");
 LinkedHashSet      = Java.type("java.util.LinkedHashSet"); 
 Map                = Java.type("java.util.Map");
 Paths              = Java.type("java.nio.file.Paths");
+PrintWriter        = Java.type("java.io.PrintWriter");
 Runtime            = Java.type("java.lang.Runtime");
+StandardCharsets   = Java.type("java.nio.charset.StandardCharsets");
+StandardOpenOption = Java.type("java.nio.file.StandardOpenOption");
 System             = Java.type("java.lang.System");
 URL                = Java.type("java.net.URL");
+ZonedDateTime      = Java.type("java.time.ZonedDateTime");
+ZoneId             = Java.type("java.time.ZoneId");
 
 JsonObject         = Java.type("javax.json.JsonObject");
 
@@ -274,13 +281,14 @@ function create(table, data, index) {
 		if(bathWaterTableDialog.shell == table.shell){
 			shipTable = bathWaterTableDialog;
 		}
+		
 		oldPaintDtoMap = getData(shipTable + "_PaintDtoMap");
 		paintDtoMap = new HashMap(); //HashMap<id,PaintDto>
 	}
-
 	var id = ship.id;
 	var json = ship.json;
 	var shipDtoEx;
+	var other = null;
 	if(json instanceof JsonObject){
 		shipDtoEx = new ShipDtoEx(new ShipDto(json),missionShips.contains(id),ndockShips.contains(id));
 	} else {
@@ -290,27 +298,26 @@ function create(table, data, index) {
 	if(oldPaintDtoMap instanceof Map && oldPaintDtoMap.containsKey(id) && oldPaintDtoMap.get(id).ShipDtoEx.equals(shipDtoEx)){
 		paintDto = oldPaintDtoMap.get(id);
 		oldPaintDtoMap.remove(id);
-	} else if(shipDtoEx.ShipDto instanceof ShipDto) {
+		other = "Existing";
+	} else {
 		var shipImage = getSynthesisShipImage(ship);
-		var item2List = new ArrayList(shipDtoEx.ShipDto.item2);
-		item2List.add(shipDtoEx.ShipDto.slotExItem);
 		var itemIconImageList = new ArrayList();
-		item2List.forEach(function(item2){
-			if(item2 instanceof ItemDto){
+		if(shipDtoEx.ShipDto instanceof ShipDto) {
+			var item2List = new ArrayList(shipDtoEx.ShipDto.item2);
+			item2List.add(shipDtoEx.ShipDto.slotExItem);
+			item2List.forEach(function(item2){
 				itemIconImageList.add(getSynthesisItemIconImage(item2));
-			} else {
-				itemIconImageList.add(null);
-			}
-		});
-		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
-	} else { //新規艦取得時限定…多分
-		var shipImage = getSynthesisShipImage(ship);
-		var itemIconImageList = new ArrayList(); //取得しているか曖昧なので空で作成
-		Collections.addAll(itemIconImageList, null, null, null, null, null, null); //1~5スロ目+補強増設分
+			});
+			other = "Changing";
+		} else { //新規艦取得時限定…多分
+			Collections.addAll(itemIconImageList, null, null, null, null, null, null); //1~5スロ目+補強増設分
+			other = "New";
+		}
 		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
 	}
 	if(paintDtoMap instanceof Map) paintDtoMap.put(id,paintDto);
-
+	paintDto.debug(id,other);
+	
 	//画像を貼り付ける
 	item.setImage(picIndex, paintDto.ShipImage);
 	item.setImage(itemType1Index, paintDto.ItemIconList.get(0));
@@ -387,27 +394,24 @@ function create(table, data, index) {
 
 function end() {
 	System.out.print("Image Dispose...");
-	try{
-		//次回読み込み短縮のために一時保存
-		if(shipTable instanceof ShipTable) setTmpData(shipTable + "_PaintDtoMap",paintDtoMap);
-		//残った分を廃棄 (こうしないとメモリ不足になって落ちる)
-		if(oldPaintDtoMap instanceof Map){
-			oldPaintDtoMap.forEach(function(id,paintDto){
-				paintDto.dispose();
-				paintDto = null;
-			});
-		}
-		oldPaintDtoMap = null;
-		System.out.println("Complete.");
-	} catch(e) {
-		System.out.println("Failed.");
-		e.printStackTrace();
+	//次回読み込み短縮のために一時保存
+	if(shipTable instanceof ShipTable) setTmpData(shipTable + "_PaintDtoMap",paintDtoMap);
+	//残った分を廃棄 (こうしないとメモリ不足になって落ちる)
+	if(oldPaintDtoMap instanceof Map){
+		oldPaintDtoMap.forEach(function(id,paintDto){
+			paintDto.dispose();
+			paintDto.debug(id,"Dispose");
+			//paintDto = null;
+		});
 	}
+	//oldPaintDtoMap = null;
+	System.out.println("Complete.");
 	System.out.println("Loading Time ->" + (System.currentTimeMillis() - startTime) + "ms.");
 	dispMemoryInfo();
 }
 
 function getSynthesisShipImage(ship,width,height){
+	if(!(ship instanceof ShipDto)) return null;
 	var width = typeof width !== 'undefined' ?  width : IMAGE_SIZE.WIDTH;
 	var height = typeof height !== 'undefined' ?  height : IMAGE_SIZE.HEIGHT;
 	var shipImage = getShipImage(ship);
@@ -427,6 +431,7 @@ function getSynthesisShipImage(ship,width,height){
 }
 
 function getSynthesisItemIconImage(item2,width,height){
+	if(!(item2 instanceof ItemDto)) return null;
 	var width = typeof width !== 'undefined' ?  width : IMAGE_SIZE.WIDTH;
 	var height = typeof height !== 'undefined' ?  height : IMAGE_SIZE.HEIGHT;
 	var itemIconImage = getItemIconImage(item2.type3);
@@ -664,6 +669,7 @@ var PaintDto = function(shipDtoEx,shipImage,itemIconList){
 	this.ShipDtoEx    = shipDtoEx;
 	this.ShipImage    = shipImage;
 	this.ItemIconList = itemIconList;
+	this.Time         = ZonedDateTime.now(ZoneId.of("Asia/Tokyo"));
 };
 
 PaintDto.prototype.dispose = function(){
@@ -673,7 +679,7 @@ PaintDto.prototype.dispose = function(){
 	}).forEach(function(itemIcon){
 		itemIcon.dispose();
 	});
-	this.ShipDtoEx = this.ShipImage = this.ItemIconList = null;
+	//this.ShipDtoEx = this.ShipImage = this.ItemIconList = null;
 };
 
 function ShipDtoEx(shipDto,isMission,isNdock){
@@ -688,7 +694,7 @@ ShipDtoEx.prototype.equals = function(shipDtoEx){
 
 function dispMemoryInfo(){
     var f1 = new DecimalFormat("#,###KB");
-    var f2 = new DecimalFormat("##.#");
+    var f2 = new DecimalFormat("##.##");
     var free = Runtime.getRuntime().freeMemory() / 1024;
     var total = Runtime.getRuntime().totalMemory() / 1024;
     var max = Runtime.getRuntime().maxMemory() / 1024;
@@ -818,3 +824,49 @@ function setTableListener(table){
 	table.addListener(SWT.EraseItem, PaintHandler);
 	setTmpData("phandler", PaintHandler);
 }
+
+PaintDto.prototype.debug = function(id,other){
+	var path = Paths.get("debug.csv");
+
+	try{
+		var pw = new PrintWriter(Files.newBufferedWriter(path,Charset.forName("Shift_JIS"),StandardOpenOption.CREATE,StandardOpenOption.APPEND));
+		if(Files.size(path) == 0) pw.println("Time,ID,Name,ShipImage,ItemIcon1,ItemIcon2,ItemIcon3,ItemIcon4,ItemIcon5,ItemIconEx,TotalMemory,UsedMemory,MaxCanUseMemory,Persent,State");
+		var dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+		pw.print(dtf.format(this.Time));
+		pw.print(",");
+		pw.print(id);
+		pw.print(",");
+		pw.print(this.ShipDtoEx.ShipDto.name);
+		pw.print(",");
+		pw.print(this.ShipImage);
+		pw.print(",");
+		this.ItemIconList.forEach(function(itemIcon){
+			pw.print(itemIcon);
+			pw.print(",");
+		});
+
+		var f1 = new DecimalFormat("####KB");
+		var f2 = new DecimalFormat("##.##");
+		var free = Runtime.getRuntime().freeMemory() / 1024;
+		var total = Runtime.getRuntime().totalMemory() / 1024;
+		var max = Runtime.getRuntime().maxMemory() / 1024;
+		var used = total - free;
+		var ratio = used * 100 / total;
+
+		pw.print(f1.format(total));
+		pw.print(",");
+		pw.print(f1.format(used));
+		pw.print(",");
+		pw.print(f1.format(max));
+		pw.print(",");
+		pw.print(f2.format(ratio));
+		pw.print("%");
+		pw.print(",");
+		pw.print(other);
+		
+		pw.println();
+		pw.close();
+	} catch(e) {
+		e.printStackTrace();
+	}
+};
