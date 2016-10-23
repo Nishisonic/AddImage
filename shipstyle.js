@@ -294,7 +294,6 @@ function create(table, data, index) {
 		shipDtoEx = new ShipDtoEx(null,missionShips.contains(id),ndockShips.contains(id));
 	}
 	var paintDto;
-	if(id == 31232) print(id + "," + (oldPaintDtoMap instanceof Map) + "," + (oldPaintDtoMap instanceof Map ? oldPaintDtoMap.containsKey(id) : false) + "," + ((oldPaintDtoMap instanceof Map && oldPaintDtoMap.containsKey(id)) ? oldPaintDtoMap.get(id).ShipDtoEx.equals(shipDtoEx) : false) + "," + oldPaintDtoMap.size()); //一時的対処
 	if(oldPaintDtoMap instanceof Map && oldPaintDtoMap.containsKey(id) && oldPaintDtoMap.get(id).ShipDtoEx.equals(shipDtoEx)){
 		paintDto = oldPaintDtoMap.get(id);
 		oldPaintDtoMap.remove(id);
@@ -388,7 +387,6 @@ function create(table, data, index) {
 		//table.addListener(SWT.EraseItem, PaintHandler);
 		setTmpData(shipTable + "_set",true);
 	}
-
 	return item;
 }
 
@@ -831,13 +829,15 @@ PaintDto.prototype.debug = function(id,other){
 
 	try{
 		var pw = new PrintWriter(Files.newBufferedWriter(path,Charset.forName("Shift_JIS"),StandardOpenOption.CREATE,StandardOpenOption.APPEND));
-		if(Files.size(path) == 0) pw.println("Time,ID,Name,ShipImage,ItemIcon1,ItemIcon2,ItemIcon3,ItemIcon4,ItemIcon5,ItemIconEx,TotalMemory,UsedMemory,MaxCanUseMemory,Persent,State");
+		if(Files.size(path) == 0) pw.println("Time,Table,ID,Name,ShipImage,ItemIcon1,ItemIcon2,ItemIcon3,ItemIcon4,ItemIcon5,ItemIconEx,TotalMemory,UsedMemory,MaxCanUseMemory,Persent,State");
 		var dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 		pw.print(dtf.format(this.Time));
 		pw.print(",");
+		pw.print(shipTable);
+		pw.print(",");
 		pw.print(id);
 		pw.print(",");
-		pw.print(this.ShipDtoEx.ShipDto.name);
+		pw.print(this.ShipDtoEx.ShipDto instanceof ShipDto ? this.ShipDtoEx.ShipDto.name : null);
 		pw.print(",");
 		pw.print(this.ShipImage);
 		pw.print(",");
