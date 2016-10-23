@@ -1,5 +1,5 @@
 /*
- * 画像追加 Ver2.0.7
+ * 画像追加 Ver2.0.7.5
  * Author:Nishisonic,Nekopanda
  * LastUpdate:2016/10/24
  * 
@@ -209,7 +209,7 @@ function begin(header) {
 		if (header[i].equals("HP"))              hpIndex = i;
 		if (header[i].equals("燃料#現在の燃料")) fuelIndex = i;
 		if (header[i].equals("弾薬#現在の弾薬")) ammoIndex = i;
-		//if (header[i].equals("Lv"))              lvIndex = i;
+		//if (header[i].equals("Lv"))            lvIndex = i;
 		if (header[i].equals("Next"))            nextIndex = i;
 		if (header[i].equals("経験値"))          expIndex = i;
 	}
@@ -294,6 +294,11 @@ function create(table, data, index) {
 		var shipImage = getSynthesisShipImage(ship);
 		var itemIconImageList = new ArrayList();
 		if(shipDtoEx.ShipDto instanceof ShipDto) {
+			//たまに処理が上手くいかないことがあるので、ここである程度処理する
+			if(oldPaintDtoMap.containsKey(id)){
+				oldPaintDtoMap.get(id).dispose();
+				oldPaintDtoMap.remove(id);
+			}
 			var item2List = new ArrayList(shipDtoEx.ShipDto.item2);
 			item2List.add(shipDtoEx.ShipDto.slotExItem);
 			item2List.forEach(function(item2){
