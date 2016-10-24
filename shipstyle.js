@@ -52,8 +52,8 @@ data_prefix = "ShipStyleImageVer2_";
 //定数
 var IMAGE_SIZE             = { WIDTH:80,HEIGHT:20 };
 var SHIP_LAYER_IMAGE_DIR   = "./script/Image/Layer/";
-var SHIP_NORMAL_IMAGE_DIR  = "./script/Image/Ship/Normal/";
-var SHIP_DAMAGE_IMAGE_DIR  = "./script/Image/Ship/Damage/";
+var NORMAL_SHIP_IMAGE_DIR  = "./script/Image/Ship/Normal/";
+var DAMAGED_SHIP_IMAGE_DIR = "./script/Image/Ship/Damaged/";
 var ITEM_ICON_IMAGE_DIR    = "./script/Image/Item/Icon/";
 var SUNK_IMAGE_URL         = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Sunk.png";
 var RED_COND_IMAGE_URL     = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Red.png";
@@ -62,8 +62,8 @@ var KIRA_COND_IMAGE_URL    = "https://raw.githubusercontent.com/Nishisonic/AddIm
 var WEDDING_IMAGE_URL      = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Wedding.png";
 var MISSION_IMAGE_URL      = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Mission.png";
 var REPAIR_IMAGE_URL       = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Repair.png";
-var SHIP_NORMAL_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Ship/Normal/";
-var SHIP_DAMAGE_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Ship/Damage/";
+var NORMAL_SHIP_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Ship/Normal/";
+var DAMAGED_SHIP_IMAGE_URL = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Ship/Damaged/";
 var ITEM_ICON_IMAGE_URL    = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Item/Icon/";
 var BADLY_IMAGE_URL        = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Badly.png";
 var BADLY_SMOKE_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/BadlySmoke.png";
@@ -574,6 +574,11 @@ function getSlightSmokeImage() {
 	return getLayerImage("SlightSmoke", SLIGHT_SMOKE_IMAGE_URL);
 }
 
+/**
+ * レイヤーの画像を取得します。
+ * 
+ * @param {String} name 
+ */
 function getLayerImage(name, url) {
     var image = getData("LAYER_" + name + ".png");
     if (!(image instanceof Image)) {
@@ -583,6 +588,12 @@ function getLayerImage(name, url) {
     return image;
 }
 
+/**
+ * 艦娘の状態から、通常または損傷状態の画像を取得します。
+ * 
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @return {org.eclipse.swt.graphics.Image} 艦娘の画像
+ */
 function getShipImage(ship) {
 	var shipId = ship.shipId;
 	var prefix;
@@ -590,12 +601,12 @@ function getShipImage(ship) {
 	var dir;
 	if(!ship.isHalfDamage()){
 		prefix = "NORMAL_";
-		url = SHIP_NORMAL_IMAGE_URL + shipId + ".jpg";
-		dir = SHIP_NORMAL_IMAGE_DIR + shipId + ".jpg";
+		url = NORMAL_SHIP_IMAGE_URL + shipId + ".jpg";
+		dir = NORMAL_SHIP_IMAGE_DIR + shipId + ".jpg";
 	} else {
-		prefix = "DAMAGE_";
-		url = SHIP_DAMAGE_IMAGE_URL + shipId + ".jpg";
-		dir = SHIP_DAMAGE_IMAGE_DIR + shipId + ".jpg";
+		prefix = "DAMAGED_";
+		url = DAMAGED_SHIP_IMAGE_URL + shipId + ".jpg";
+		dir = DAMAGED_SHIP_IMAGE_DIR + shipId + ".jpg";
 	}
     var image  = getData(prefix + shipId + ".jpg");
     if (!(image instanceof Image)) {
@@ -605,6 +616,12 @@ function getShipImage(ship) {
     return image;
 }
 
+/**
+ * 装備アイコンの画像を取得します。
+ * 
+ * @param {Number} type3 表示分類
+ * @return {org.eclipse.swt.graphics.Image} 装備アイコンの画像
+ */
 function getItemIconImage(type3){
     var image  = getData("ITEM_ICON_" + type3 + ".png");
     if (!(image instanceof Image)) {
@@ -818,7 +835,7 @@ function loadShipImage(){
  * 艦娘(通常)の画像をメモリ上に展開します。
  */
 function loadNormalShipImage(){
-	var normalShipImageDir = new File(SHIP_NORMAL_IMAGE_DIR);
+	var normalShipImageDir = new File(NORMAL_SHIP_IMAGE_DIR);
 	if(normalShipImageDir.exists()){
 		Arrays.stream(normalShipImageDir.listFiles(ImageFilter)).forEach(function(file){
 			setTmpData("NORMAL_" + file.getName(),SWTResourceManager.getImage(file.toString()));
@@ -832,7 +849,7 @@ function loadNormalShipImage(){
  * 艦娘(中破)の画像をメモリ上に展開します。
  */
 function loadDamagedShipImage(){
-	var damagedShipImageDir = new File(SHIP_DAMAGE_IMAGE_DIR);
+	var damagedShipImageDir = new File(DAMAGED_SHIP_IMAGE_DIR);
 	if(damagedShipImageDir.exists()){
 		Arrays.stream(damagedShipImageDir.listFiles(ImageFilter)).forEach(function(file){
 			setTmpData("DAMAGED_" + file.getName(),SWTResourceManager.getImage(file.toString()));
