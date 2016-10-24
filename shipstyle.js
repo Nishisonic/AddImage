@@ -172,7 +172,7 @@ function begin(header) {
 		}
 		setTmpData("isLoaded",true);
 	}
-	for (var i = 0; i < header.length; ++i) {
+	IntStream.range(0,header.length).forEach(function(i){
 		if (header[i].equals("疲労"))            condIndex = i;
 		if (header[i].equals("画像"))            picIndex = i;
 		if (header[i].equals("種別画像1"))       itemType1Index = i;
@@ -187,17 +187,15 @@ function begin(header) {
 		//if (header[i].equals("Lv"))            lvIndex = i;
 		if (header[i].equals("Next"))            nextIndex = i;
 		if (header[i].equals("経験値"))          expIndex = i;
-	}
+	});
 }
 
 function getTableCondColor(cond) {
-	for (var i = 0; i < AppConstants.COND_TABLE_COLOR.length; ++i) {
-		if (cond >= AppConstants.COND_TABLE[i]) {
-			return SWTResourceManager.getColor(AppConstants.COND_TABLE_COLOR[i]);
-		}
-	}
-	// 0より小さいってあり得ないけど
-	return SWTResourceManager.getColor(AppConstants.COND_RED_COLOR);
+	return IntStream.range(0,AppConstants.COND_TABLE_COLOR.length).filter(function(i){
+		return cond >= AppConstants.COND_TABLE[i];
+	}).boxed().map(function(i){
+		return SWTResourceManager.getColor(AppConstants.COND_TABLE_COLOR[i]);
+	}).findFirst().orElse(SWTResourceManager.getColor(AppConstants.COND_RED_COLOR));
 }
 
 function create(table, data, index) {
@@ -274,11 +272,10 @@ function create(table, data, index) {
 			item2List.forEach(function(item2){
 				itemIconImageList.add(getSynthesisItemIconImage(item2));
 			});
-			paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
 		} else { //新規艦取得時用
 			Collections.addAll(itemIconImageList, null, null, null, null, null, null); //1~5スロ目+補強増設分
-			paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
 		}
+		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
 		//たまに処理が上手くいかないことがあるので、ここである程度処理する
 		if(oldPaintDtoMap instanceof Map && oldPaintDtoMap.containsKey(id)){
 			oldPaintDtoMap.get(id).dispose();
