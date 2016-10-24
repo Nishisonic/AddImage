@@ -154,6 +154,12 @@ function begin(header) {
 	});
 }
 
+/**
+ * 艦娘のcond値からcond色を取得します。
+ * 
+ * @param {Number} cond 艦娘のcond値
+ * @return {org.eclipse.swt.graphics.Color} cond色
+ */
 function getTableCondColor(cond) {
 	return IntStream.range(0,AppConstants.COND_TABLE_COLOR.length).filter(function(i){
 		return cond >= AppConstants.COND_TABLE[i];
@@ -333,10 +339,10 @@ function end() {
 /**
  * 合成した艦娘の画像を返します。
  * 
- * @param {ShipDto} ship 艦娘のデータ
- * @param {int} width 画像の横幅(指定しない場合は80)
- * @param {int} height 画像の縦幅(指定しない場合は20)
- * @return {Image} 合成した画像
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @param {Number} width 画像の横幅(指定しない場合は80)
+ * @param {Number} height 画像の縦幅(指定しない場合は20)
+ * @return {org.eclipse.swt.graphics.Image} 合成した画像
  */
 function getSynthesisShipImage(ship,width,height){
 	if(!(ship instanceof ShipDto)) return null;
@@ -361,10 +367,10 @@ function getSynthesisShipImage(ship,width,height){
 /**
  * 合成した装備アイコンの画像を返します。
  * 
- * @param {ItemDto} item2 装備のデータ
- * @param {int} width 画像の横幅(指定しない場合は80)
- * @param {int} height 画像の縦幅(指定しない場合は20)
- * @return {Image} 合成した画像
+ * @param {logbook.dto.ItemDto} item2 装備のデータ
+ * @param {Number} width 画像の横幅(指定しない場合は80)
+ * @param {Number} height 画像の縦幅(指定しない場合は20)
+ * @return {org.eclipse.swt.graphics.Image} 合成した画像
  */
 function getSynthesisItemIconImage(item2,width,height){
 	if(!(item2 instanceof ItemDto)) return null;
@@ -426,9 +432,10 @@ function getSynthesisItemIconImage(item2,width,height){
 /**
  * 画像のSetをリサイズ、合成して一つの画像にして返します。
  * 
- * @param {Set<Image>} imageSet 画像のSet
- * @param {int} width 画像の横幅
- * @param {int} height 画像の縦幅
+ * @param {java.util.Set<Image>} imageSet 画像のSet
+ * @param {Number} width 画像の横幅
+ * @param {Number} height 画像の縦幅
+ * @return {org.eclipse.swt.graphics.Image} 合成した画像
  */
 function resize(imageSet,width,height){
 	var scaled = new Image(Display.getDefault(), width, height);
@@ -455,7 +462,8 @@ var ImageFilter = new FilenameFilter(function(dir,name){
  * インターネット上から画像を取得します。
  * 
  * @param {String} uri 画像のURL
- * @param {path} String ファイルパス
+ * @param {String} path ファイルパス
+ * @return {org.eclipse.swt.graphics.Image} 取得した画像
  */
 function getWebImage(uri,path){
 	var url = new URL(uri);
@@ -470,6 +478,12 @@ function getWebImage(uri,path){
 	return null;
 }
 
+/**
+ * 艦娘のcond値から疲労の画像を取得します。
+ * 
+ * @param {logbook.dto.ShipDto} cond 艦娘のcond値
+ * @return {org.eclipse.swt.graphics.Image} 疲労の画像(該当しなかった場合はnullを返す)
+ */
 function getCondImage(cond){
     if (cond < 20) return getRedCondImage();    //赤疲労
 	if (cond < 30) return getOrangeCondImage(); //橙疲労
@@ -498,6 +512,12 @@ function getWeddingImage(lv) {
     return null;
 }
 
+/**
+ * 艦娘の状態から今の状況の画像を取得します(入渠、遠征、大破、中破、小破)。
+ * 
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @return {org.eclipse.swt.graphics.Image} 状態の画像(該当しなかった場合はnullを返す)
+ */
 function getStateImage(ship) {
 	if (ndockShips.contains(ship.id))   return getRepairImage();  //入渠
 	if (missionShips.contains(ship.id)) return getMissionImage(); //遠征
@@ -507,7 +527,12 @@ function getStateImage(ship) {
     return null;
 }
 
-//一時対処
+/**
+ * 艦娘の状態から煙の画像を取得します。
+ * 
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @return {org.eclipse.swt.graphics.Image} 煙の画像(該当しなかった場合はnullを返す)
+ */
 function getSmokeImage(ship) {
 	if(!(ndockShips.contains(ship.id) || missionShips.contains(ship.id))){
     	if (ship.isBadlyDamage())  return getBadlySmokeImage();   //大破
@@ -620,6 +645,13 @@ ShipDtoEx.prototype.equals = function(shipDtoEx){
 	return this.ShipDto instanceof ShipDto && this.ShipDto.equals(shipDtoEx.ShipDto) && this.isMission == shipDtoEx.isMission && this.isNdock == shipDtoEx.isNdock;
 };
 
+/**
+ * Pointから列番号を取得します。
+ * 
+ * @param {org.eclipse.swt.graphics.Point} pt 座標
+ * @param {org.eclipse.swt.widgets.TableItem} item TableItem
+ * @return {Number} 列番号(見つからない場合は-1を返す)
+ */
 function getColumnIndex(pt,item){
 	if(item instanceof TableItem){
 		var columns = item.getParent().getColumnCount();
@@ -631,6 +663,13 @@ function getColumnIndex(pt,item){
 	return -1;
 }
 
+/**
+ * テーブルの列から装備データを取得します。
+ * 
+ * @param {Number} index 列番号
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @return {logbook.dto.ItemDto} 装備データ
+ */
 function getItemName(index,ship){
 	var itemDto;
 	switch(index){
@@ -701,6 +740,11 @@ var PaintHandler = new Listener(function(event) {
 
 /**
  * 複数の色の中間色を取得する(nashorn用に改造)
+ * 
+ * @param {Float32Array} raito 割合
+ * @param {org.eclipse.swt.graphics.Color} start 開始色
+ * @param {org.eclipse.swt.graphics.Color} end 終了色
+ * @return {org.eclipse.swt.graphics.Color} 中間色
  */
 function gradation(raito, start, end) {
 	if(end === undefined){
