@@ -133,43 +133,7 @@ function begin(header) {
 	missionShips = GlobalContext.getMissionShipSet();
 	ndockShips = GlobalContext.getNDockShipSet();
 	if(!getData("isLoaded")){ //nullはfalse
-		var shipLayerImageDir  = new File(SHIP_LAYER_IMAGE_DIR);
-		var shipNormalImageDir = new File(SHIP_NORMAL_IMAGE_DIR);
-		var shipDamageImageDir = new File(SHIP_DAMAGE_IMAGE_DIR);
-		var itemIconImageDir   = new File(ITEM_ICON_IMAGE_DIR);
-		
-		if(shipLayerImageDir.exists()){
-			//レイヤー
-			Arrays.stream(shipLayerImageDir.listFiles(ImageFilter)).forEach(function(file){
-				setTmpData("LAYER_" + file.getName(),SWTResourceManager.getImage(file.toString()));
-			});
-		} else {
-			shipLayerImageDir.mkdirs();
-		}
-		if(shipNormalImageDir.exists()){
-			//通常
-			Arrays.stream(shipNormalImageDir.listFiles(ImageFilter)).forEach(function(file){
-				setTmpData("NORMAL_" + file.getName(),SWTResourceManager.getImage(file.toString()));
-			});
-		} else {
-			shipNormalImageDir.mkdirs();
-		}
-		if(shipDamageImageDir.exists()){
-			//損傷
-			Arrays.stream(shipDamageImageDir.listFiles(ImageFilter)).forEach(function(file){
-				setTmpData("DAMAGE_" + file.getName(),SWTResourceManager.getImage(file.toString()));
-			});
-		} else {
-			shipDamageImageDir.mkdirs();
-		}
-		if(itemIconImageDir.exists()){
-			//アイコン
-			Arrays.stream(itemIconImageDir.listFiles(ImageFilter)).forEach(function(file){
-				setTmpData("ITEM_ICON_" + file.getName(),SWTResourceManager.getImage(file.toString()));
-			});
-		} else {
-			itemIconImageDir.mkdirs();
-		}
+		loadImage();
 		setTmpData("isLoaded",true);
 	}
 	IntStream.range(0,header.length).forEach(function(i){
@@ -276,11 +240,6 @@ function create(table, data, index) {
 			Collections.addAll(itemIconImageList, null, null, null, null, null, null); //1~5スロ目+補強増設分
 		}
 		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
-		//たまに処理が上手くいかないことがあるので、ここである程度処理する
-		if(oldPaintDtoMap instanceof Map && oldPaintDtoMap.containsKey(id)){
-			oldPaintDtoMap.get(id).dispose();
-			oldPaintDtoMap.remove(id);
-		}
 	}
 	if(paintDtoMap instanceof Map) paintDtoMap.put(id,paintDto);
 
@@ -371,6 +330,14 @@ function end() {
 	//oldPaintDtoMap = null;
 }
 
+/**
+ * 合成した艦娘の画像を返します。
+ * 
+ * @param {ShipDto} ship 艦娘のデータ
+ * @param {int} width 画像の横幅(指定しない場合は80)
+ * @param {int} height 画像の縦幅(指定しない場合は20)
+ * @return {Image} 合成した画像
+ */
 function getSynthesisShipImage(ship,width,height){
 	if(!(ship instanceof ShipDto)) return null;
 	var width = typeof width !== 'undefined' ?  width : IMAGE_SIZE.WIDTH;
@@ -391,6 +358,14 @@ function getSynthesisShipImage(ship,width,height){
 	return resize(imageSet,width,height);
 }
 
+/**
+ * 合成した装備アイコンの画像を返します。
+ * 
+ * @param {ItemDto} item2 装備のデータ
+ * @param {int} width 画像の横幅(指定しない場合は80)
+ * @param {int} height 画像の縦幅(指定しない場合は20)
+ * @return {Image} 合成した画像
+ */
 function getSynthesisItemIconImage(item2,width,height){
 	if(!(item2 instanceof ItemDto)) return null;
 	var width = typeof width !== 'undefined' ?  width : IMAGE_SIZE.WIDTH;
@@ -449,12 +424,11 @@ function getSynthesisItemIconImage(item2,width,height){
 }
 
 /**
- * 画像をリサイズして返します。
+ * 画像のSetをリサイズ、合成して一つの画像にして返します。
  * 
- * @param imageSet java.util.Set<org.eclipse.swt.graphics.Image>
- * @param width int
- * @param height int
- * @return scaled org.eclipse.swt.graphics.Image
+ * @param {Set<Image>} imageSet 画像のSet
+ * @param {int} width 画像の横幅
+ * @param {int} height 画像の縦幅
  */
 function resize(imageSet,width,height){
 	var scaled = new Image(Display.getDefault(), width, height);
@@ -477,6 +451,12 @@ var ImageFilter = new FilenameFilter(function(dir,name){
 	return ext.equals("jpg") || name.equals("jpeg") || name.endsWith("png");
 });
 
+/**
+ * インターネット上から画像を取得します。
+ * 
+ * @param {String} uri 画像のURL
+ * @param {path} String ファイルパス
+ */
 function getWebImage(uri,path){
 	var url = new URL(uri);
 	var urlConnection = HttpURLConnection.class.cast(url.openConnection());
@@ -757,4 +737,77 @@ function setTableListener(table){
 	}
 	table.addListener(SWT.EraseItem, PaintHandler);
 	setTmpData("phandler", PaintHandler);
+}
+
+/**
+ * フォルダ内にある画像をメモリ上に展開します。
+ */
+function loadImage(){
+	loadLayerImage();
+	loadShipImage();
+	loadItemIconImage();
+}
+
+/**
+ * レイヤーをメモリ上に展開します。
+ */
+function loadLayerImage(){
+	var shipLayerImageDir  = new File(SHIP_LAYER_IMAGE_DIR);
+	if(shipLayerImageDir.exists()){
+		Arrays.stream(shipLayerImageDir.listFiles(ImageFilter)).forEach(function(file){
+			setTmpData("LAYER_" + file.getName(),SWTResourceManager.getImage(file.toString()));
+		});
+	} else {
+		shipLayerImageDir.mkdirs();
+	}
+}
+
+/**
+ * 艦娘の画像をメモリ上に展開します。
+ */
+function loadShipImage(){
+	loadNormalShipImage();
+	loadDamagedShipImage();
+}
+
+/**
+ * 艦娘(通常)の画像をメモリ上に展開します。
+ */
+function loadNormalShipImage(){
+	var normalShipImageDir = new File(SHIP_NORMAL_IMAGE_DIR);
+	if(normalShipImageDir.exists()){
+		Arrays.stream(normalShipImageDir.listFiles(ImageFilter)).forEach(function(file){
+			setTmpData("NORMAL_" + file.getName(),SWTResourceManager.getImage(file.toString()));
+		});
+	} else {
+		normalShipImageDir.mkdirs();
+	}
+}
+
+/**
+ * 艦娘(中破)の画像をメモリ上に展開します。
+ */
+function loadDamagedShipImage(){
+	var damagedShipImageDir = new File(SHIP_DAMAGE_IMAGE_DIR);
+	if(damagedShipImageDir.exists()){
+		Arrays.stream(damagedShipImageDir.listFiles(ImageFilter)).forEach(function(file){
+			setTmpData("DAMAGED_" + file.getName(),SWTResourceManager.getImage(file.toString()));
+		});
+	} else {
+		damagedShipImageDir.mkdirs();
+	}
+}
+
+/**
+ * 装備のアイコンの画像をメモリ上に展開します。
+ */
+function loadItemIconImage(){
+	var itemIconImageDir = new File(ITEM_ICON_IMAGE_DIR);
+	if(itemIconImageDir.exists()){
+		Arrays.stream(itemIconImageDir.listFiles(ImageFilter)).forEach(function(file){
+			setTmpData("ITEM_ICON_" + file.getName(),SWTResourceManager.getImage(file.toString()));
+		});
+	} else {
+		itemIconImageDir.mkdirs();
+	}
 }
