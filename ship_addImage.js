@@ -1,7 +1,7 @@
 /*
- * 画像追加 Ver2.0.8
+ * 画像追加 Ver2.0.9
  * Author:Nishisonic
- * LastUpdate:2016/10/24
+ * LastUpdate:2016/10/26
  * 
  * 所有艦娘一覧に画像を追加します。
  */
