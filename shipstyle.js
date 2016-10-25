@@ -1,51 +1,52 @@
 /**
- * 画像追加 Ver2.0.8
+ * 画像追加 Ver2.0.9
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2016/10/24
+ * LastUpdate:2016/10/26
  * 
  * 所有艦娘一覧に画像を追加します。
  */
 
 load("script/ScriptData.js");
 
-Color              = Java.type("org.eclipse.swt.graphics.Color");
-Display            = Java.type("org.eclipse.swt.widgets.Display");
-Event              = Java.type("org.eclipse.swt.widgets.Event");
-FillLayout         = Java.type("org.eclipse.swt.layout.FillLayout");
-GC                 = Java.type("org.eclipse.swt.graphics.GC");
-Image              = Java.type("org.eclipse.swt.graphics.Image");
-Label              = Java.type("org.eclipse.swt.widgets.Label");
-Listener           = Java.type("org.eclipse.swt.widgets.Listener");
-Point              = Java.type("org.eclipse.swt.graphics.Point");
-RGB                = Java.type("org.eclipse.swt.graphics.RGB");
-Shell              = Java.type("org.eclipse.swt.widgets.Shell");
-SWT                = Java.type("org.eclipse.swt.SWT");
-SWTResourceManager = Java.type("org.eclipse.wb.swt.SWTResourceManager");
-TableItem          = Java.type("org.eclipse.swt.widgets.TableItem");
+Color               = Java.type("org.eclipse.swt.graphics.Color");
+Display             = Java.type("org.eclipse.swt.widgets.Display");
+Event               = Java.type("org.eclipse.swt.widgets.Event");
+FillLayout          = Java.type("org.eclipse.swt.layout.FillLayout");
+GC                  = Java.type("org.eclipse.swt.graphics.GC");
+Image               = Java.type("org.eclipse.swt.graphics.Image");
+Label               = Java.type("org.eclipse.swt.widgets.Label");
+Listener            = Java.type("org.eclipse.swt.widgets.Listener");
+Point               = Java.type("org.eclipse.swt.graphics.Point");
+RGB                 = Java.type("org.eclipse.swt.graphics.RGB");
+Shell               = Java.type("org.eclipse.swt.widgets.Shell");
+SWT                 = Java.type("org.eclipse.swt.SWT");
+TableItem           = Java.type("org.eclipse.swt.widgets.TableItem");
+SWTResourceManager  = Java.type("org.eclipse.wb.swt.SWTResourceManager");
 
-ArrayList          = Java.type("java.util.ArrayList");
-Arrays             = Java.type("java.util.Arrays");
-Collections        = Java.type("java.util.Collections");
-File               = Java.type("java.io.File");
-FilenameFilter     = Java.type("java.io.FilenameFilter");
-Files              = Java.type("java.nio.file.Files");
-HashMap            = Java.type("java.util.HashMap");
-HttpURLConnection  = Java.type("java.net.HttpURLConnection");
-IntStream          = Java.type("java.util.stream.IntStream");
-LinkedHashSet      = Java.type("java.util.LinkedHashSet"); 
-Map                = Java.type("java.util.Map");
-Paths              = Java.type("java.nio.file.Paths");
-URL                = Java.type("java.net.URL");
+File                = Java.type("java.io.File");
+FilenameFilter      = Java.type("java.io.FilenameFilter");
+HttpURLConnection   = Java.type("java.net.HttpURLConnection");
+URL                 = Java.type("java.net.URL");
+Files               = Java.type("java.nio.file.Files");
+Paths               = Java.type("java.nio.file.Paths");
+ArrayList           = Java.type("java.util.ArrayList");
+Arrays              = Java.type("java.util.Arrays");
+Collections         = Java.type("java.util.Collections");
+HashMap             = Java.type("java.util.HashMap");
+IntStream           = Java.type("java.util.stream.IntStream");
+LinkedHashSet       = Java.type("java.util.LinkedHashSet"); 
+Map                 = Java.type("java.util.Map");
 
-JsonObject         = Java.type("javax.json.JsonObject");
+JsonObject          = Java.type("javax.json.JsonObject");
 
-AppConstants       = Java.type("logbook.constants.AppConstants");
-ApplicationMain    = Java.type("logbook.gui.ApplicationMain");
-GlobalContext      = Java.type("logbook.data.context.GlobalContext");
-ItemDto            = Java.type("logbook.dto.ItemDto");
-ReportUtils        = Java.type("logbook.util.ReportUtils");
-ShipDto            = Java.type("logbook.dto.ShipDto");
-ShipTable          = Java.type("logbook.gui.ShipTable");
+AppConstants        = Java.type("logbook.constants.AppConstants");
+GlobalContext       = Java.type("logbook.data.context.GlobalContext");
+ItemDto             = Java.type("logbook.dto.ItemDto");
+ShipDto             = Java.type("logbook.dto.ShipDto");
+ApplicationMain     = Java.type("logbook.gui.ApplicationMain");
+AbstractTableDialog = Java.type("logbook.gui.AbstractTableDialog");
+ShipTable           = Java.type("logbook.gui.ShipTable");
+ReportUtils         = Java.type("logbook.util.ReportUtils");
 
 data_prefix = "ShipStyleImageVer2_";
 
@@ -129,6 +130,11 @@ var label           = null;
 var missionShips;
 var ndockShips;
 
+/**
+ * テーブルリロード時に行作成前に呼び出されます。
+ * 
+ * @param {java.lang.String[]} header テーブルのヘッダ
+ */
 function begin(header) {
 	missionShips = GlobalContext.getMissionShipSet();
 	ndockShips = GlobalContext.getNDockShipSet();
@@ -168,6 +174,14 @@ function getTableCondColor(cond) {
 	}).findFirst().orElse(SWTResourceManager.getColor(AppConstants.COND_RED_COLOR));
 }
 
+/**
+ * 行作成時に呼び出されます
+ * 
+ * @param {org.eclipse.swt.widgets.Table} table テーブル
+ * @param {java.lang.Comparable[]} data 該当行の項目データ
+ * @param {int} index 行番号（上から0始まり）
+ * @return {org.eclipse.swt.widgets.TableItem} 作成したTableItem
+ */
 function create(table, data, index) {
 	if(index == 0) setTableListener(table);
 	// 艦娘
@@ -207,16 +221,9 @@ function create(table, data, index) {
 	 */
 	if(index == 0){
 		//メモリをキー代わりにしてみる(基本的にdispose()しないはずなので、SWTExceptionは起きないはず)
-		Arrays.stream(ApplicationMain.main.getShipTables()).filter(function(shiptable){
+		shipTable = Arrays.stream(ApplicationMain.main.getShipTables()).filter(function(shiptable){
 			return shiptable.shell == table.shell;
-		}).forEach(function(shiptable){
-			shipTable = shiptable;
-		});
-		//お風呂に入りたい艦娘
-		var bathWaterTableDialog = ApplicationMain.main.getBathwaterTableDialog();
-		if(bathWaterTableDialog.shell == table.shell){
-			shipTable = bathWaterTableDialog;
-		}
+		}).findFirst().orElse(ApplicationMain.main.getBathwaterTableDialog());
 		oldPaintDtoMap = getData(shipTable + "_PaintDtoMap");
 		paintDtoMap = new HashMap(); //HashMap<id,PaintDto>
 	}
@@ -323,17 +330,19 @@ function create(table, data, index) {
 	return item;
 }
 
+/**
+ * テーブルリロード時に行作成が終了したときに呼び出されます。
+ */
 function end() {
 	//次回読み込み短縮のために一時保存
-	if(shipTable instanceof ShipTable) setTmpData(shipTable + "_PaintDtoMap",paintDtoMap);
-	//残った分を廃棄 (こうしないとメモリ不足になって落ちる)
+	if(shipTable instanceof AbstractTableDialog) setTmpData(shipTable + "_PaintDtoMap",paintDtoMap);
 	if(oldPaintDtoMap instanceof Map){
 		oldPaintDtoMap.forEach(function(id,paintDto){
 			paintDto.dispose();
-			//paintDto = null;
+			paintDto = null;
 		});
 	}
-	//oldPaintDtoMap = null;
+	oldPaintDtoMap = null;
 }
 
 /**
@@ -451,6 +460,9 @@ function resize(imageSet,width,height){
 	return scaled;
 }
 
+/**
+ * Filter
+ */
 var ImageFilter = new FilenameFilter(function(dir,name){
 	var index = name.lastIndexOf(".");
 	var ext = name.substring(index+1).toLowerCase();
@@ -491,22 +503,48 @@ function getCondImage(cond){
 	return null;
 }
 
+/**
+ * 撃沈のレイヤー画像を取得します
+ * 
+ * @return {org.eclipse.swt.graphics.Image} 撃沈のレイヤー画像
+ */
 function getSunkImage(){
     return getLayerImage("Sunk", SUNK_IMAGE_URL);
 }
 
+/**
+ * 赤疲労のレイヤー画像を取得します
+ * 
+ * @return {org.eclipse.swt.graphics.Image} 赤疲労のレイヤー画像
+ */
 function getRedCondImage(){
     return getLayerImage("Red", RED_COND_IMAGE_URL);
 }
 
+/**
+ * 橙疲労のレイヤー画像を取得します
+ * 
+ * @return {org.eclipse.swt.graphics.Image} 橙疲労のレイヤー画像
+ */
 function getOrangeCondImage() {
     return getLayerImage("Orange", ORANGE_COND_IMAGE_URL);
 }
 
+/**
+ * キラキラのレイヤー画像を取得します
+ * 
+ * @return {org.eclipse.swt.graphics.Image} キラのレイヤー画像
+ */
 function getKiraCondImage(){
     return getLayerImage("Kira", KIRA_COND_IMAGE_URL);
 }
 
+/**
+ * 指輪のレイヤー画像を取得します
+ * 
+ * @param {Number} lv 艦娘のレベル
+ * @return {org.eclipse.swt.graphics.Image} 指輪のレイヤー画像(満たしていない場合はnull)
+ */
 function getWeddingImage(lv) {
     if (lv > 99) return getLayerImage("Wedding", WEDDING_IMAGE_URL);
     return null;
@@ -542,42 +580,84 @@ function getSmokeImage(ship) {
     return null;
 }
 
+/**
+ * 修復のレイヤー画像を取得します。
+ * 
+ * @return {org.eclipse.swt.graphics.Image} 修復のレイヤー画像
+ */
 function getRepairImage() {
     return getLayerImage("Repair", REPAIR_IMAGE_URL);
 }
 
+/**
+ * 遠征のレイヤー画像を取得します。
+ * 
+ * @return {org.eclipse.swt.graphics.Image} 遠征のレイヤー画像
+ */
 function getMissionImage() {
     return getLayerImage("Mission", MISSION_IMAGE_URL);
 }
 
+/**
+ * 大破のレイヤー画像を取得します。
+ * 
+ * @return {org.eclipse.swt.graphics.Image} 大破のレイヤー画像
+ */
 function getBadlyImage() {
 	return getLayerImage("Badly", BADLY_IMAGE_URL);
 }
 
+/**
+ * 大破(煙)のレイヤー画像を取得します。
+ * 
+ * @return {org.eclipse.swt.graphics.Image} 大破(煙)のレイヤー画像
+ */
 function getBadlySmokeImage() {
 	return getLayerImage("BadlySmoke", BADLY_SMOKE_IMAGE_URL);
 }
 
+/**
+ * 中破のレイヤー画像を取得します。
+ * 
+ * @return {org.eclipse.swt.graphics.Image} 中破のレイヤー画像
+ */
 function getHalfImage() {
 	return getLayerImage("Half", HALF_IMAGE_URL);
 }
 
+/**
+ * 中破(煙)のレイヤー画像を取得します。
+ * 
+ * @return {org.eclipse.swt.graphics.Image} 中破(煙)のレイヤー画像
+ */
 function getHalfSmokeImage() {
 	return getLayerImage("HalfSmoke", HALF_SMOKE_IMAGE_URL);
 }
 
+/**
+ * 小破のレイヤー画像を取得します。
+ * 
+ * @return {org.eclipse.swt.graphics.Image} 小破のレイヤー画像
+ */
 function getSlightImage() {
 	return getLayerImage("Slight", SLIGHT_IMAGE_URL);
 }
 
+/**
+ * 小破(煙)のレイヤー画像を取得します。
+ * 
+ * @return {org.eclipse.swt.graphics.Image} 小破(煙)のレイヤー画像
+ */
 function getSlightSmokeImage() {
 	return getLayerImage("SlightSmoke", SLIGHT_SMOKE_IMAGE_URL);
 }
 
 /**
- * レイヤーの画像を取得します。
+ * レイヤー画像を取得します。
  * 
- * @param {String} name 
+ * @param {String} name 名前
+ * @param {String} url 取得できなかった場合のURL
+ * @return {org.eclipse.swt.graphics.Image} レイヤー画像
  */
 function getLayerImage(name, url) {
     var image = getData("LAYER_" + name + ".png");
@@ -632,9 +712,9 @@ function getItemIconImage(type3){
 }
 
 /**
- * @param shipDtoEx 
- * @param shipImage org.eclipse.swt.graphics.Image
- * @param itemIconList java.util.List<org.eclipse.swt.graphics.Image>(5)
+ * @param {ShipDtoEx} shipDtoEx
+ * @param {org.eclipse.swt.graphics.Image} shipImage
+ * @param {java.util.List<org.eclipse.swt.graphics.Image>} itemIconList
  */
 var PaintDto = function(shipDtoEx,shipImage,itemIconList){
 	this.ShipDtoEx    = shipDtoEx;
@@ -649,9 +729,14 @@ PaintDto.prototype.dispose = function(){
 	}).forEach(function(itemIcon){
 		itemIcon.dispose();
 	});
-	//this.ShipDtoEx = this.ShipImage = this.ItemIconList = null;
+	this.ShipDtoEx = this.ShipImage = this.ItemIconList = null;
 };
 
+/**
+ * @param {ShipDto} shipDto
+ * @param {boolean} isMission
+ * @param {boolean} isNdock
+ */
 function ShipDtoEx(shipDto,isMission,isNdock){
 	this.ShipDto = shipDto;
 	this.isMission = isMission;
@@ -713,7 +798,9 @@ function getItemName(index,ship){
 	return itemDto instanceof ItemDto ? itemDto.name : null;
 }
 
-
+/**
+ * Event
+ */
 var PaintHandler = new Listener(function(event) {
 	var ship = event.item.data;
 	var gc = event.gc;
@@ -791,8 +878,13 @@ function gradation(raito, start, end) {
 	}
 }
 
+/**
+ * 進捗バーを描画するイベントを設定します。
+ * 
+ * @param {org.eclipse.swt.widgets.Table} table テーブル
+ */
 function setTableListener(table){
-	listener = getData("phandler");
+	var listener = getData("phandler");
 	if(listener instanceof Listener) {
 		table.removeListener(SWT.EraseItem, listener);
 	}
