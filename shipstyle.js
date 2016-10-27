@@ -1,5 +1,5 @@
 /**
- * 画像追加 Ver2.1.0
+ * 画像追加 Ver2.1.0(COLOR)
  * Author:Nishisonic,Nekopanda
  * LastUpdate:2016/10/28
  * 
@@ -95,7 +95,7 @@ var LV_COLOR               = [new RGB(255,255,255),
 							  new RGB( 69,169,165),
 							  new RGB( 69,169,165),
 							];
-var HP_PROGRESS_COLOR     = {GAUGE_EMPTY:new RGB(0xff, 0, 0),
+var PROGRESS_COLOR        = {GAUGE_EMPTY:new RGB(0xff, 0, 0),
 							 GAUGE_HALF:new RGB(0xff, 0xd7, 0),
 							 GAUGE_FULL:new RGB(0, 0xd7, 0),
 							};
@@ -811,9 +811,9 @@ var PaintHandler = new Listener(function(event) {
 	// 進捗バーを消す場合、下のcase文を消すことで非表示に出来る
 	var bgColor = function(index){
 		switch(index){
-			case hpIndex:   return SWTResourceManager.getColor(gradation(rate,[HP_PROGRESS_COLOR.GAUGE_EMPTY,HP_PROGRESS_COLOR.GAUGE_HALF,HP_PROGRESS_COLOR.GAUGE_FULL]));
-			case fuelIndex: return SWTResourceManager.getColor(FUEL_PROGRESS_COLOR);
-			case ammoIndex: return SWTResourceManager.getColor(AMMO_PROGRESS_COLOR);
+			case hpIndex:
+			case fuelIndex:
+			case ammoIndex: return SWTResourceManager.getColor(gradation(rate,[PROGRESS_COLOR.GAUGE_EMPTY,PROGRESS_COLOR.GAUGE_HALF,PROGRESS_COLOR.GAUGE_FULL]));
 			//case lvIndex: return SWTResourceManager.getColor(LV_PROGRESS_COLOR);
 			case nextIndex: return SWTResourceManager.getColor(NEXT_PROGRESS_COLOR);
 			case expIndex:  return ship.lv > 99 ? SWTResourceManager.getColor(EXP_PROGRESS_COLOR.MARRIED) : SWTResourceManager.getColor(EXP_PROGRESS_COLOR.NOT_MARRIED);
