@@ -1,7 +1,7 @@
 /**
- * 画像追加 Ver2.0.9
+ * 画像追加 Ver2.1.0
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2016/10/26
+ * LastUpdate:2016/10/27
  * 
  * 所有艦娘一覧に画像を追加します。
  */
@@ -229,13 +229,7 @@ function create(table, data, index) {
 	}
 
 	var id = ship.id;
-	var json = ship.json;
-	var shipDtoEx;
-	if(json instanceof JsonObject){
-		shipDtoEx = new ShipDtoEx(new ShipDto(json),missionShips.contains(id),ndockShips.contains(id));
-	} else {
-		shipDtoEx = new ShipDtoEx(null,missionShips.contains(id),ndockShips.contains(id));
-	}
+	var shipDtoEx = new ShipDtoEx(ship,missionShips.contains(id),ndockShips.contains(id));
 	var paintDto;
 	if(oldPaintDtoMap instanceof Map && oldPaintDtoMap.containsKey(id) && oldPaintDtoMap.get(id).ShipDtoEx.equals(shipDtoEx)){
 		paintDto = oldPaintDtoMap.get(id);
@@ -243,15 +237,11 @@ function create(table, data, index) {
 	} else {
 		var shipImage = getSynthesisShipImage(ship);
 		var itemIconImageList = new ArrayList();
-		if(shipDtoEx.ShipDto instanceof ShipDto) {
-			var item2List = new ArrayList(shipDtoEx.ShipDto.item2);
-			item2List.add(shipDtoEx.ShipDto.slotExItem);
-			item2List.forEach(function(item2){
-				itemIconImageList.add(getSynthesisItemIconImage(item2));
-			});
-		} else { //新規艦取得時用
-			Collections.addAll(itemIconImageList, null, null, null, null, null, null); //1~5スロ目+補強増設分
-		}
+		var item2List = new ArrayList(shipDtoEx.ShipDto.item2);
+		item2List.add(shipDtoEx.ShipDto.slotExItem);
+		item2List.forEach(function(item2){
+			itemIconImageList.add(getSynthesisItemIconImage(item2));
+		});
 		paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
 	}
 	if(paintDtoMap instanceof Map) paintDtoMap.put(id,paintDto);
@@ -744,7 +734,7 @@ function ShipDtoEx(shipDto,isMission,isNdock){
 }
 
 ShipDtoEx.prototype.equals = function(shipDtoEx){
-	return this.ShipDto instanceof ShipDto && this.ShipDto.equals(shipDtoEx.ShipDto) && this.isMission == shipDtoEx.isMission && this.isNdock == shipDtoEx.isNdock;
+	return this.ShipDto.equals(shipDtoEx.ShipDto) && this.isMission == shipDtoEx.isMission && this.isNdock == shipDtoEx.isNdock;
 };
 
 /**
