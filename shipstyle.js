@@ -1,7 +1,7 @@
 /**
  * 画像追加 Ver2.1.0
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2016/10/27
+ * LastUpdate:2016/10/28
  * 
  * 所有艦娘一覧に画像を追加します。
  */
@@ -729,12 +729,13 @@ PaintDto.prototype.dispose = function(){
  */
 function ShipDtoEx(shipDto,isMission,isNdock){
 	this.ShipDto = shipDto;
+	this.Item2 = shipDto.item2;
 	this.isMission = isMission;
 	this.isNdock = isNdock;
 }
 
 ShipDtoEx.prototype.equals = function(shipDtoEx){
-	return this.ShipDto.equals(shipDtoEx.ShipDto) && this.isMission == shipDtoEx.isMission && this.isNdock == shipDtoEx.isNdock;
+	return this.ShipDto.equals(shipDtoEx.ShipDto) && this.Item2.equals(shipDtoEx.Item2)  && this.isMission == shipDtoEx.isMission && this.isNdock == shipDtoEx.isNdock;
 };
 
 /**
