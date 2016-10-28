@@ -1,5 +1,5 @@
 /**
- * 画像追加 Ver2.1.1+
+ * 画像追加 Ver2.1.2+
  * Author:Nishisonic,Nekopanda
  * LastUpdate:2016/10/29
  * 
@@ -729,13 +729,14 @@ PaintDto.prototype.dispose = function(){
  */
 function ShipDtoEx(shipDto,isMission,isNdock){
 	this.ShipDto = shipDto;
+	this.HP = shipDto.nowhp;
 	this.Item2 = shipDto.item2;
 	this.isMission = isMission;
 	this.isNdock = isNdock;
 }
 
 ShipDtoEx.prototype.equals = function(shipDtoEx){
-	return this.ShipDto.equals(shipDtoEx.ShipDto) && this.ShipDto.nowhp == shipDtoEx.ShipDto.nowhp && this.Item2.equals(shipDtoEx.Item2) && this.isMission == shipDtoEx.isMission && this.isNdock == shipDtoEx.isNdock;
+	return this.ShipDto.equals(shipDtoEx.ShipDto) && this.HP == shipDtoEx.HP && this.Item2.equals(shipDtoEx.Item2) && this.isMission == shipDtoEx.isMission && this.isNdock == shipDtoEx.isNdock;
 };
 
 /**
