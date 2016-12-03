@@ -1,5 +1,5 @@
 /**
- * 画像追加 Ver2.1.3+
+ * 画像追加 Ver2.1.3
  * Author:Nishisonic,Nekopanda
  * LastUpdate:2016/12/04
  * 
@@ -833,9 +833,9 @@ var PaintHandler = new Listener(function(event) {
     // 進捗バーを消す場合、下のcase文を消すことで非表示に出来る
     var bgColor = function(index){
         switch(index){
-            case hpIndex:
-            case fuelIndex:
-            case ammoIndex: return SWTResourceManager.getColor(gradation(rate,[PROGRESS_COLOR.GAUGE_EMPTY,PROGRESS_COLOR.GAUGE_HALF,PROGRESS_COLOR.GAUGE_FULL]));
+            case hpIndex:   return SWTResourceManager.getColor(gradation(rate,[PROGRESS_COLOR.GAUGE_EMPTY,PROGRESS_COLOR.GAUGE_HALF,PROGRESS_COLOR.GAUGE_FULL]));
+            case fuelIndex: return SWTResourceManager.getColor(FUEL_PROGRESS_COLOR);
+            case ammoIndex: return SWTResourceManager.getColor(AMMO_PROGRESS_COLOR);
             //case lvIndex: return SWTResourceManager.getColor(LV_PROGRESS_COLOR);
             case nextIndex: return SWTResourceManager.getColor(NEXT_PROGRESS_COLOR);
             case expIndex:  return ship.lv > 99 ? SWTResourceManager.getColor(EXP_PROGRESS_COLOR.MARRIED) : SWTResourceManager.getColor(EXP_PROGRESS_COLOR.NOT_MARRIED);

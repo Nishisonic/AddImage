@@ -1,5 +1,5 @@
 /*
- * 画像追加 Ver2.1.3+
+ * 画像追加 Ver2.1.3
  * Author:Nishisonic
  * LastUpdate:2016/12/04
  * 
