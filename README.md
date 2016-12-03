@@ -2,7 +2,7 @@
 画像追加Ex (AddImage)
 --
 
-[![Release](https://img.shields.io/badge/gem-v2.1.2-brightgreen.svg)](https://github.com/Nishisonic/QuestStateEx/releases/latest)
+[![Release](https://img.shields.io/badge/gem-v2.1.3-brightgreen.svg)](https://github.com/Nishisonic/QuestStateEx/releases/latest)
 [![License](https://img.shields.io/npm/l/express.svg)](https://docs.google.com/spreadsheets/d/1gSYgCPTMV7_bDerWTs_KCgVnhdaJQnFVFXcw5cFCqos/edit#gid=761755938)
 
 
@@ -21,7 +21,7 @@
 
 * 動作イメージ
 
-![](http://i.imgur.com/ZLTFrG6.png)
+![](https://pbs.twimg.com/media/CyxHdhfUUAAR0O8.jpg)
 
 
 
