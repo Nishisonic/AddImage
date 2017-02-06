@@ -1,5 +1,5 @@
 /**
- * 画像追加 Ver2.1.3
+ * 画像追加 Ver2.1.3+
  * Author:Nishisonic,Nekopanda
  * LastUpdate:2016/12/04
  * 
@@ -50,6 +50,7 @@ ItemDto             = Java.type("logbook.dto.ItemDto");
 ShipDto             = Java.type("logbook.dto.ShipDto");
 ApplicationMain     = Java.type("logbook.gui.ApplicationMain");
 AbstractTableDialog = Java.type("logbook.gui.AbstractTableDialog");
+ShipParameters      = Java.type("logbook.dto.ShipParameters");
 ShipTable           = Java.type("logbook.gui.ShipTable");
 ReportUtils         = Java.type("logbook.util.ReportUtils");
 
@@ -127,6 +128,7 @@ var ammoIndex       = -1;
 //var lvIndex       = -1;
 var nextIndex       = -1;
 var expIndex        = -1;
+var nameIndex       = -1;
 //変数
 var shipTable       = null;
 var oldPaintDtoMap  = null;
@@ -165,6 +167,7 @@ function begin(header) {
         //if (header[i].equals("Lv"))            lvIndex = i;
         if (header[i].equals("Next"))            nextIndex = i;
         if (header[i].equals("経験値"))          expIndex = i;
+        if (header[i].equals("名前"))            nameIndex = i;
     });
 }
 
@@ -281,14 +284,18 @@ function create(table, data, index) {
                 var item = table.getItem(point);
                 var columnIndex = getColumnIndex(point,item);
                 var itemName = getItemName(columnIndex,item);
-                if (item != null && itemName != null) {
+                var status = getStatus(columnIndex,item);
+                if (item != null && (itemName != null || status != null)) {
                     if (tip != null && !tip.isDisposed()) tip.dispose();
                     tip = new Shell(table.getShell(), SWT.ON_TOP | SWT.TOOL);
                     tip.setLayout(new FillLayout());
                     label = new Label (tip, SWT.NONE);
                     label.setData ("_TABLEITEM", item);
-                    var itemName = getItemName(columnIndex,item);
-                    label.setText (getItemName(columnIndex,item));
+                    if(itemName != null){
+                        label.setText (itemName);
+                    } else if(status != null){
+                        label.setText (status);
+                    }
                     label.addListener (SWT.MouseExit, LabelListener);
                     label.addListener (SWT.MouseDown, LabelListener);
                     var size = tip.computeSize (SWT.DEFAULT, SWT.DEFAULT);
@@ -811,6 +818,25 @@ function getItemName(index,ship){
     return itemDto instanceof ItemDto ? itemDto.name : null;
 }
 
+function getStatus(index,ship){
+    if(index == nameIndex){
+        var param = new ShipParameters();
+		param.add(ship.data.param);
+		param.subtract(ship.data.slotParam);
+        return " " + ship.data.getType() + " " + ship.data.getName() + " Lv." + ship.data.getLv() + " \n "
+            + "火力: " + param.getKaryoku()  + "/" + ship.data.getKaryoku()  + " \n "
+            + "雷装: " + param.getRaisou()   + "/" + ship.data.getRaisou()   + " \n "
+            + "対空: " + param.getTaiku()    + "/" + ship.data.getTaiku()    + " \n "
+            + "装甲: " + param.getSoukou()   + "/" + ship.data.getSoukou()   + " \n "
+            + "回避: " + param.getKaihi()    + "/" + ship.data.getKaihi()    + " \n "
+            + "対潜: " + param.getTaisen()   + "/" + ship.data.getTaisen()   + " \n "
+            + "索敵: " + param.getSakuteki() + "/" + ship.data.getSakuteki() + " \n "
+            + "運: "   + param.getLucky()    + " \n "
+            + "射程: " + ship.data.param.getLengString() + " / 速力: "+ ship.data.param.getSokuString() + " ";
+    }
+    return null;
+}
+
 /**
  * Event
  */
@@ -833,9 +859,9 @@ var PaintHandler = new Listener(function(event) {
     // 進捗バーを消す場合、下のcase文を消すことで非表示に出来る
     var bgColor = function(index){
         switch(index){
-            case hpIndex:   return SWTResourceManager.getColor(gradation(rate,[PROGRESS_COLOR.GAUGE_EMPTY,PROGRESS_COLOR.GAUGE_HALF,PROGRESS_COLOR.GAUGE_FULL]));
-            case fuelIndex: return SWTResourceManager.getColor(FUEL_PROGRESS_COLOR);
-            case ammoIndex: return SWTResourceManager.getColor(AMMO_PROGRESS_COLOR);
+            case hpIndex:
+            case fuelIndex:
+            case ammoIndex: return SWTResourceManager.getColor(gradation(rate,[PROGRESS_COLOR.GAUGE_EMPTY,PROGRESS_COLOR.GAUGE_HALF,PROGRESS_COLOR.GAUGE_FULL]));
             //case lvIndex: return SWTResourceManager.getColor(LV_PROGRESS_COLOR);
             case nextIndex: return SWTResourceManager.getColor(NEXT_PROGRESS_COLOR);
             case expIndex:  return ship.lv > 99 ? SWTResourceManager.getColor(EXP_PROGRESS_COLOR.MARRIED) : SWTResourceManager.getColor(EXP_PROGRESS_COLOR.NOT_MARRIED);
