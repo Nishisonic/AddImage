@@ -1,5 +1,5 @@
 /**
- * 画像追加 Ver2.1.4
+ * 画像追加 Ver2.1.4.1
  * Author:Nishisonic,Nekopanda
  * LastUpdate:2017/02/08
  * 
@@ -889,7 +889,6 @@ function toStatus(index,ship){
  * @return {String} データ
  */
 function toHpDetail(index,_ship){
-    print(_ship)
     if(index == hpIndex && _ship != null){
         var ship = _ship.data;
         var hpRate = ship.getNowhp() / ship.getMaxhp();
