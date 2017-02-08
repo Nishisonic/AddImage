@@ -1,7 +1,7 @@
 /**
- * 画像追加 Ver2.1.3+
+ * 画像追加 Ver2.1.4
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2016/12/04
+ * LastUpdate:2017/02/08
  * 
  * 所有艦娘一覧に画像を追加します。
  */
@@ -11,36 +11,37 @@ load("script/utils.js");
 
 IOUtils             = Java.type("org.apache.commons.io.IOUtils");
 
+SWT                 = Java.type("org.eclipse.swt.SWT");
 Color               = Java.type("org.eclipse.swt.graphics.Color");
-Display             = Java.type("org.eclipse.swt.widgets.Display");
-Event               = Java.type("org.eclipse.swt.widgets.Event");
-FillLayout          = Java.type("org.eclipse.swt.layout.FillLayout");
 GC                  = Java.type("org.eclipse.swt.graphics.GC");
 Image               = Java.type("org.eclipse.swt.graphics.Image");
-Label               = Java.type("org.eclipse.swt.widgets.Label");
-Listener            = Java.type("org.eclipse.swt.widgets.Listener");
 Point               = Java.type("org.eclipse.swt.graphics.Point");
 RGB                 = Java.type("org.eclipse.swt.graphics.RGB");
+FillLayout          = Java.type("org.eclipse.swt.layout.FillLayout");
+Label               = Java.type("org.eclipse.swt.widgets.Label");
+Listener            = Java.type("org.eclipse.swt.widgets.Listener");
 Shell               = Java.type("org.eclipse.swt.widgets.Shell");
-SWT                 = Java.type("org.eclipse.swt.SWT");
+Display             = Java.type("org.eclipse.swt.widgets.Display");
+Event               = Java.type("org.eclipse.swt.widgets.Event");
 TableItem           = Java.type("org.eclipse.swt.widgets.TableItem");
 SWTResourceManager  = Java.type("org.eclipse.wb.swt.SWTResourceManager");
 
-Charset             = Java.type("java.nio.charset.Charset");
 File                = Java.type("java.io.File");
 FilenameFilter      = Java.type("java.io.FilenameFilter");
 HttpURLConnection   = Java.type("java.net.HttpURLConnection");
+URI                 = Java.type("java.net.URI");
 URL                 = Java.type("java.net.URL");
+Charset             = Java.type("java.nio.charset.Charset");
 Files               = Java.type("java.nio.file.Files");
 Paths               = Java.type("java.nio.file.Paths");
 ArrayList           = Java.type("java.util.ArrayList");
 Arrays              = Java.type("java.util.Arrays");
 Collections         = Java.type("java.util.Collections");
 HashMap             = Java.type("java.util.HashMap");
-IntStream           = Java.type("java.util.stream.IntStream");
 LinkedHashSet       = Java.type("java.util.LinkedHashSet"); 
 Map                 = Java.type("java.util.Map");
-URI                 = Java.type("java.net.URI");
+Collectors          = Java.type("java.util.stream.Collectors");
+IntStream           = Java.type("java.util.stream.IntStream");
 
 JsonObject          = Java.type("javax.json.JsonObject");
 
@@ -48,10 +49,12 @@ AppConstants        = Java.type("logbook.constants.AppConstants");
 GlobalContext       = Java.type("logbook.data.context.GlobalContext");
 ItemDto             = Java.type("logbook.dto.ItemDto");
 ShipDto             = Java.type("logbook.dto.ShipDto");
+ShipParameters      = Java.type("logbook.dto.ShipParameters");
 ApplicationMain     = Java.type("logbook.gui.ApplicationMain");
 AbstractTableDialog = Java.type("logbook.gui.AbstractTableDialog");
-ShipParameters      = Java.type("logbook.dto.ShipParameters");
 ShipTable           = Java.type("logbook.gui.ShipTable");
+CalcTaiku           = Java.type("logbook.gui.logic.CalcTaiku");
+SeikuString         = Java.type("logbook.gui.logic.SeikuString");
 ReportUtils         = Java.type("logbook.util.ReportUtils");
 
 data_prefix = "ShipStyleImageVer2_";
@@ -283,18 +286,24 @@ function create(table, data, index) {
                 var point = new Point(event.x, event.y);
                 var item = table.getItem(point);
                 var columnIndex = getColumnIndex(point,item);
-                var itemName = getItemName(columnIndex,item);
-                var status = getStatus(columnIndex,item);
-                if (item != null && (itemName != null || status != null)) {
+                var itemData = toItemData(columnIndex,item);
+                var status = toStatus(columnIndex,item);
+                var hpDetail = toHpDetail(columnIndex,item);
+                var expedition = toExpeditionString(columnIndex,item);
+                if (item != null && (itemData != null || status != null || hpDetail != null || expedition != null)) {
                     if (tip != null && !tip.isDisposed()) tip.dispose();
                     tip = new Shell(table.getShell(), SWT.ON_TOP | SWT.TOOL);
                     tip.setLayout(new FillLayout());
                     label = new Label (tip, SWT.NONE);
                     label.setData ("_TABLEITEM", item);
-                    if(itemName != null){
-                        label.setText (itemName);
+                    if(itemData != null){
+                        label.setText(itemData);
                     } else if(status != null){
-                        label.setText (status);
+                        label.setText(status);
+                    } else if(hpDetail != null){
+                        label.setText(hpDetail);
+                    } else if(expedition != null){
+                        label.setText(expedition);
                     }
                     label.addListener (SWT.MouseExit, LabelListener);
                     label.addListener (SWT.MouseDown, LabelListener);
@@ -331,7 +340,6 @@ function create(table, data, index) {
         //table.addListener(SWT.EraseItem, PaintHandler);
         setTmpData(shipTable + "_set",true);
     }
-
     return item;
 }
 
@@ -786,43 +794,79 @@ function getColumnIndex(pt,item){
 }
 
 /**
- * テーブルの列から装備データを取得します。
+ * テーブルの列でデータを取得するか判断、取得する場合は装備データを加工したものを返します。しない場合はnullを返す。
  * 
  * @param {Number} index 列番号
- * @param {logbook.dto.ShipDto} ship 艦娘のデータ
- * @return {logbook.dto.ItemDto} 装備データ
+ * @param {org.eclipse.swt.widgets.TableItem} _ship テーブルの行
+ * @return {String} データ
  */
-function getItemName(index,ship){
-    var itemDto;
+function toItemData(index,_ship){
+    if(_ship == null) return null;
+    var ship = _ship.data;
+    var result = " ";
     switch(index){
         case itemType1Index:
-            itemDto = ship.data.item2.get(0);
-            break;
-        case itemType2Index: 
-            itemDto = ship.data.item2.get(1);
-            break;
-        case itemType3Index: 
-            itemDto = ship.data.item2.get(2);
-            break;
-        case itemType4Index: 
-            itemDto = ship.data.item2.get(3);
-            break;
-        //case itemType5Index: 
-        //    itemDto = ship.data.item2.get(4);
-        //    break;
-        case itemTypeExIndex: 
-            itemDto = ship.data.slotExItem;
+        case itemType2Index:
+        case itemType3Index:
+        case itemType4Index:
+        case itemTypeExIndex:
+        //case itemType5Index:
+            var onslots = ship.getOnSlot();
+            var maxeqs  = ship.getMaxeq();
+            var item2  = ship.item2;
+            for(var i = 0;i < item2.size();i++){
+                var itemdto = item2.get(i);
+                if(itemdto == null) break;
+                var onslot = onslots[i];
+                var maxeq = maxeqs[i];
+                var name = itemdto.name;
+                var alv = itemdto.alv;
+                var lv = itemdto.level;
+                result += "[" + onslot + "/" + maxeq + "] " + name + (lv > 0 ? "+" + lv : "") + (alv > 0 ? " Lv." + alv : "") + " \n ";
+            }
+            var itemdto = ship.slotExItem;
+            if(itemdto == null) break;
+            var name = itemdto.name;
+            var lv = itemdto.level;
+            result += "補強: " + name + (lv > 0 ? "+" + lv : "") + " \n ";
             break;
         default: return null;
     }
-    return itemDto instanceof ItemDto ? itemDto.name : null;
+    result += " \n ";
+    result += "昼戦: " + ((ship.stype == 13 || ship.stype == 14) ? "雷撃" : (getHougekiKindString(getHougekiKind(ship)) + " - 威力:" + getHougekiPower(ship))) + " \n ";
+    result += "夜戦: " + getYasenKindString(getYasenKind(ship)) + " - 威力:" + getYasenPower(ship) + " \n ";
+    if((canKaimakuRaigeki(ship) || canRaigeki(ship)) && getTaisenKind(ship) > 0){
+        result += "雷撃: " + getRaigekiPower(ship) + " / 対潜:" + getTaisenPower(ship) + " \n ";
+    } else if(canKaimakuRaigeki(ship) || canRaigeki(ship)){
+        result += "雷撃: " + getRaigekiPower(ship) + " \n ";
+    } else if(getTaisenKind(ship) > 0){
+        result += "対潜: " + getTaisenPower(ship) + " \n ";
+    }
+    var calcTaiku = new CalcTaiku();
+    result += "加重対空: " + calcTaiku.getFriendKajuuValue(ship) + " (割合撃墜: " + Number(calcTaiku.getFriendProportionalShootDown(ship) * 100).toFixed(2) + "%) ";
+    var seiku = new SeikuString(ship);
+    if(seiku.getValue() > 0 && getKoukuPower(ship) != 0){
+        result += "\n 制空戦力: " + seiku.getValue() + " / 航空威力: " + getKoukuPower(ship) + " ";
+    } else if(seiku.getValue() > 0){
+        result += "\n 制空戦力: " + seiku.getValue() + " ";
+    } else if(getKoukuPower(ship) != 0){
+        result += "\n 航空威力: " + getKoukuPower(ship) + " ";
+    }
+    return result;
 }
 
-function getStatus(index,ship){
-    if(index == nameIndex){
+/**
+ * テーブルの列でデータを取得するか判断、取得する場合は艦娘のステータスを加工したものを返します。しない場合はnullを返す。
+ * 
+ * @param {Number} index 列番号
+ * @param {org.eclipse.swt.widgets.TableItem} ship 艦娘のデータ
+ * @return {String} データ
+ */
+function toStatus(index,ship){
+    if(index == nameIndex && ship != null){
         var param = new ShipParameters();
-		param.add(ship.data.param);
-		param.subtract(ship.data.slotParam);
+        param.add(ship.data.param);
+        param.subtract(ship.data.slotParam);
         return " " + ship.data.getType() + " " + ship.data.getName() + " Lv." + ship.data.getLv() + " \n "
             + "火力: " + param.getKaryoku()  + "/" + ship.data.getKaryoku()  + " \n "
             + "雷装: " + param.getRaisou()   + "/" + ship.data.getRaisou()   + " \n "
@@ -833,6 +877,67 @@ function getStatus(index,ship){
             + "索敵: " + param.getSakuteki() + "/" + ship.data.getSakuteki() + " \n "
             + "運: "   + param.getLucky()    + " \n "
             + "射程: " + ship.data.param.getLengString() + " / 速力: "+ ship.data.param.getSokuString() + " ";
+    }
+    return null;
+}
+
+/**
+ * テーブルの列でデータを取得するか判断、取得する場合は艦娘のHPを加工したものを返します。しない場合はnullを返す。
+ * 
+ * @param {Number} index 列番号
+ * @param {org.eclipse.swt.widgets.TableItem} _ship テーブルの行
+ * @return {String} データ
+ */
+function toHpDetail(index,_ship){
+    print(_ship)
+    if(index == hpIndex && _ship != null){
+        var ship = _ship.data;
+        var hpRate = ship.getNowhp() / ship.getMaxhp();
+        var hpState = function(_ship){
+            var _hpRate = ship.getNowhp() / ship.getMaxhp();
+            var result = "";
+            var untilBadlyDamage = ship.getNowhp() - Math.floor(_ship.getMaxhp() * 0.25);
+            var untilHalfDamage = ship.getNowhp() - Math.floor(_ship.getMaxhp() * 0.5);
+            if(_ship.isSunk()){
+                result += " 轟沈しました... ";
+            } else {
+                if(_ship.isBadlyDamage()){
+                    result += " 大破しています！ ";
+                } else if(_ship.isHalfDamage()){
+                    result += " 大破まで: " + untilBadlyDamage + " ";
+                } else {
+                    result += " 中破まで: " + untilHalfDamage + " / 大破まで: " + untilBadlyDamage + " ";
+                }
+                if(_hpRate != 1){
+                    result += "\n 入渠時間: " + toDateRestString(_ship.getDocktime()) + " @ " + toDateRestString(_ship.getDocktime() / (_ship.getMaxhp() - _ship.getNowhp())) + " ";
+                }
+            }
+            return result;
+        }(ship);
+        var hpStateString = function(_ship){
+            var _hpRate = ship.getNowhp() / ship.getMaxhp();
+            if(_ship.isSunk())         return "轟沈";
+            if(_ship.isBadlyDamage())  return "大破";
+            if(_ship.isHalfDamage())   return "中破";
+            if(_ship.isSlightDamage()) return "小破";
+            if(_hpRate == 1)           return "無傷";
+            return "健在";
+        }(ship);
+        return " HP:" + Number(hpRate * 100).toFixed(1) + "% [" + hpStateString + "] \n" + hpState;
+    }
+    return null;
+}
+
+/**
+ * テーブルの列でデータを取得するか判断、取得する場合は遠征数を返します。しない場合はnullを返す。
+ * 
+ * @param {Number} index 列番号
+ * @param {org.eclipse.swt.widgets.TableItem} ship テーブルの行
+ * @return {String} データ
+ */
+function toExpeditionString(index,ship){
+    if(index == condIndex && ship != null){
+        return " あと " + Math.max(Math.ceil((ship.data.cond - 49) / 3),0) + " 回遠征可能 ";
     }
     return null;
 }
@@ -1002,4 +1107,598 @@ function loadItemIconImage(){
     } else {
         itemIconImageDir.mkdirs();
     }
+}
+
+/**
+ * 砲撃戦火力を返します。
+ * 
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @return {Number} 砲撃戦火力
+ */
+function getHougekiPower(ship){
+    var hougekiPower;
+    switch(getHougekiKind(ship)){
+        case 7:
+            var rai = ship.slotParam.raig;
+            var baku = ship.slotParam.baku;
+            hougekiPower = Math.floor((ship.karyoku + rai + getHougekiKaishuPower(ship.item2) + Math.floor(baku * 1.3)) * 1.5) + 55;
+            break;
+        default:
+            hougekiPower = (ship.karyoku + getHougekiKaishuPower(ship.item2) + 5);
+            break;
+    }
+    hougekiPower *= getHPPowerBonus(ship,false);
+    hougekiPower += getCLLightGunPowerBonus(ship);
+    return ammoCorrection(ship,softcap(hougekiPower,150) * getDanchakuDamageMagnification(getHougekiKind(ship)));
+}
+
+/**
+ * 対潜火力を返します。
+ * 
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @return {Number} 対潜火力
+ */
+function getTaisenPower(ship){
+    // 対潜 = √素対潜 × 2 + 装備対潜 × 1.5 + 装備改修補正(対潜) + 攻撃別定数
+    var taisenItem = ship.item2.stream().filter(function(item){
+        return item != null;
+    }).filter(function(item){
+        switch(item.type2){
+            case  7: // 艦上爆撃機
+            case  8: // 艦上攻撃機
+            case 11: // 水上爆撃機
+            case 14: // ソナー
+            case 15: // 爆雷
+            case 25: // オートジャイロ
+            case 26: // 対潜哨戒機
+            //case 41: // 大型飛行艇
+                return true;
+            default:
+                return false;
+        }
+    }).mapToInt(function(item){
+        return item.taisen;
+    }).sum();
+    var taisenShip = ship.taisen - ship.slotParam.taisen;
+    var taisenBasicPower;
+
+    switch(getTaisenKind(ship)){
+        case 7:
+            // 艦載機運用艦＝対潜基本値8
+            taisenBasicPower = 8;
+            break;
+        case 8:
+            // 爆雷攻撃艦＝対潜基本値13
+            taisenBasicPower = 13;
+            break;
+        default:
+            return 0;
+    }
+    
+    var taisenPower = (Math.sqrt(taisenShip) * 2 + taisenItem * 1.5 + getTaisenKaishuPower(ship.item2) + taisenBasicPower) * (hasTaisenSynergy(ship.item2) ? 1.15 : 1.0) * getHPPowerBonus(ship,false);
+    return ammoCorrection(ship,softcap(taisenPower,100));
+}
+
+/**
+ * 夜戦火力を返します。
+ * 
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @return {Number} 夜戦火力
+ */
+function getYasenPower(ship){
+    var yasenPower = (ship.karyoku + ship.raisou + getYasenKaishuPower(ship.item2)) * getYasenCutinDamageMagnification(getYasenKind(ship)) * getHPPowerBonus(ship,false) + getCLLightGunPowerBonus(ship);
+    return ammoCorrection(ship,softcap(yasenPower,300));
+}
+
+/**
+ * 雷撃戦火力を返します。
+ * 
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @return {String} 雷撃戦火力
+ */
+function getRaigekiPower(ship){
+    var kRaigekiPower = (ship.raisou + getRaigekiKaishuPower(ship.item2) + 5) * getHPPowerBonus(ship,true);
+    var raigekiPower = (ship.raisou + getRaigekiKaishuPower(ship.item2) + 5) * getHPPowerBonus(ship,false);
+    if(canKaimakuRaigeki(ship) && canRaigeki(ship)){
+        return ammoCorrection(ship,softcap(kRaigekiPower,150)) + " - " + ammoCorrection(ship,softcap(raigekiPower,150));
+    } else if(canKaimakuRaigeki(ship)){
+        return ammoCorrection(ship,softcap(kRaigekiPower,150));
+    } else if(canRaigeki(ship)){
+        return ammoCorrection(ship,softcap(raigekiPower,150));
+    }
+    return 0;
+}
+
+/**
+ * 航空威力を返します。
+ * 
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @return {String} 航空威力
+ */
+function getKoukuPower(ship){
+    var item2 = ship.item2;
+    var onslots = ship.getOnSlot();
+    // 運営式
+    var injectionPower = IntStream.range(0,item2.size()).filter(function(i){
+        return item2.get(i) != null && onslots[i] > 0;
+    }).mapToDouble(function(i){
+        switch(item2.get(i).type2){
+            case 57: // 噴式戦闘爆撃機
+                return item2.get(i).param.baku * Math.sqrt(onslots[i]) + 25;
+            default:
+                return 0;
+        }
+    }).sum() * getHPPowerBonus(ship,false);
+    var airPower = IntStream.range(0,item2.size()).filter(function(i){
+        return item2.get(i) != null && onslots[i] > 0;
+    }).mapToDouble(function(i){
+        switch(item2.get(i).type2){
+            case 7:  // 艦上爆撃機
+            case 11: // 水上爆撃機
+                return item2.get(i).param.baku * Math.sqrt(onslots[i]) + 25;
+            case 8:  // 艦上攻撃機
+                return (item2.get(i).param.raig * Math.sqrt(onslots[i]) + 25) * 1.5;
+            case 57: // 噴式戦闘爆撃機
+                return (item2.get(i).param.baku * Math.sqrt(onslots[i]) + 25) / Math.sqrt(2);
+            default:
+                return 0;
+        }
+    }).sum() * getHPPowerBonus(ship,false);
+    if(injectionPower > 0){
+        return ammoCorrection(ship,softcap(injectionPower,150)) + " - " + ammoCorrection(ship,softcap(airPower,150));
+    } else if(airPower > 0){
+        return ammoCorrection(ship,softcap(airPower,150));
+    } else {
+        return 0;
+    }
+}
+
+/**
+ * 雷撃攻撃が出来るか判断します。
+ * 
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @return {boolean}
+ */
+function canRaigeki(ship){
+    var raisouItem = ship.slotParam.raisou;
+    var raisouShip = ship.raisou - raisouItem;
+    return raisouShip > 0;
+}
+
+/**
+ * 開幕雷撃攻撃が出来るか判断します。
+ * 
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @return {boolean}
+ */
+function canKaimakuRaigeki(ship){
+    switch(ship.stype){
+        case 13: // 潜水艦
+        case 14: // 潜水空母
+            if(ship.lv >= 10) return true;
+        default:
+            return ship.item2.stream().filter(function(item){
+                return item != null;
+            }).anyMatch(function(item){
+                return item.type2 == 22; // 特殊潜航艇
+            });
+    }
+}
+
+/**
+ * 対潜攻撃の種別を返します。
+ * 
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @return {Number} -1なら攻撃なし、7なら空撃、8なら爆雷攻撃
+ */
+function getTaisenKind(ship){
+    switch (ship.stype) {
+        case 7: // 軽空母
+            return ship.item2.stream().filter(function(item){
+                return item != null && item.param.taisen > 0;
+            }).map(function(item){
+                return item.type2;
+            }).anyMatch(function(type2){
+                switch(type2){
+                    case 7:  // 艦上爆撃機
+                    case 8:  // 艦上攻撃機
+                        return true;
+                    default:
+                        return false;
+                }
+            }) ? 7 : -1;
+        case  6: // 航空巡洋艦
+        case 10: // 航空戦艦
+        case 16: // 水上機母艦
+        case 17: // 揚陸艦
+            return ship.item2.stream().filter(function(item){
+                return item != null && item.param.taisen > 0;
+            }).map(function(item){
+                return item.type2;
+            }).anyMatch(function(type2){
+                switch(type2){
+                    case 11: // 水上爆撃機
+                    case 25: // オートジャイロ
+                    case 26: // 対潜哨戒機
+                    case 41: // 大型飛行艇
+                        return true;
+                    default:
+                        return false;
+                }
+            }) ? 7 : -1; // 空撃or攻撃なし
+        default:
+            var taisenItem = ship.slotParam.taisen;
+            var taisenShip = ship.taisen - taisenItem;
+            if(taisenShip > 0){
+                // 速吸改
+                if(ship.shipId == 352){
+                    return ship.item2.stream().filter(function(item){
+                        return item != null && item.param.taisen > 0;
+                    }).map(function(item){
+                        return item.type2;
+                    }).anyMatch(function(type2){
+                        switch(type2){
+                            case 8:  // 艦上攻撃機
+                            case 11: // 水上爆撃機
+                            case 25: // オートジャイロ
+                                return true;
+                            default:
+                                return false;
+                        }
+                    }) ? 7 : 8; // 空撃or爆雷攻撃
+                }
+                return 8; // 爆雷攻撃
+            }
+            return -1; // 攻撃なし
+    }
+}
+
+/**
+ * 対潜シナジーがあるかを返します。
+ * 
+ * @param {logbook.dto.ItemDto} item2 装備データ
+ * @return {boolean} trueならシナジーあり、falseなら無し
+ */
+function hasTaisenSynergy(item2){
+     // 爆雷=17,ソナー=18 両方必要なので、処理を変えないこと
+     return item2.stream().filter(function(item){ return item != null; }).map(function(item){ return item.type3; }).anyMatch(function(type3){ return type3 === 17; })
+         && item2.stream().filter(function(item){ return item != null; }).map(function(item){ return item.type3; }).anyMatch(function(type3){ return type3 === 18; });
+}
+
+/**
+ * 対潜改修補正火力を返します。
+ * 
+ * @param {logbook.dto.ItemDto} item2 装備データ
+ * @return {Number} 改修補正火力
+ */
+function getTaisenKaishuPower(item2){
+     return item2.stream().filter(function(item){ return item != null && (item.type3 === 17 || item.type3 === 18); }).mapToDouble(function(item){ return Math.sqrt(item.level); }).sum();
+}
+
+/**
+ * 砲撃戦改修補正火力を返します。
+ * 
+ * @param {logbook.dto.ItemDto} item2 装備データ
+ * @return {Number} 改修補正火力
+ */
+function getHougekiKaishuPower(item2){
+    var kaishuBonus = function(type3){
+        switch(type3){
+            case 1: return 1;    // 小口径主砲
+            case 2: return 1;    // 中口径主砲
+            case 3: return 1.5;  // 大口径主砲
+            case 4: return 1;    // 副砲
+            case 13:return 1;    // 対艦徹甲弾
+            case 30:return 1;    // 高射装置
+            case 24:return 1;    // 探照灯
+            case 15:return 1;    // 機銃
+            case 17:return 0.75; // 爆雷
+            case 18:return 0.75; // ソナー
+            case 20:return 1;    // 上陸用舟艇
+            case 36:return 1;    // 特二式内火艇
+            default:return 0;
+        }
+    };
+    return item2.stream().filter(function(item){
+        return item != null;
+    }).mapToDouble(function(item){
+        return kaishuBonus(item.type3) * Math.sqrt(item.level);
+    }).sum();
+}
+
+/**
+ * 夜戦改修補正火力を返します。
+ * 
+ * @param {logbook.dto.ItemDto} item2 装備データ
+ * @return {Number} 改修補正火力
+ */
+function getYasenKaishuPower(item2){
+    var kaishuBonus = function(type3){
+        switch(type3){
+            case 1: return 1;    // 小口径主砲
+            case 2: return 1;    // 中口径主砲
+            case 3: return 1;    // 大口径主砲
+            case 4: return 1;    // 副砲
+            case 13:return 1;    // 対艦徹甲弾
+            case 30:return 1;    // 高射装置
+            case 24:return 1;    // 探照灯
+            case  5:return 1;    // 魚雷
+            case 20:return 1;    // 上陸用舟艇
+            case 36:return 1;    // 特二式内火艇
+            default:return 0;
+        }
+    };
+    return item2.stream().filter(function(item){
+        return item != null;
+    }).mapToDouble(function(item){
+        return kaishuBonus(item.type3) * Math.sqrt(item.level);
+    }).sum();
+}
+
+/**
+ * 雷撃戦改修補正火力を返します。
+ * 
+ * @param {logbook.dto.ItemDto} item2 装備データ
+ * @return {Number} 改修補正火力
+ */
+function getRaigekiKaishuPower(item2){
+    return item2.stream().filter(function(item){ return item != null && (item.type3 === 5 || item.type3 === 15); }).mapToDouble(function(item){ return 1.2 * Math.sqrt(item.level); }).sum();
+}
+
+/**
+ * ソフトキャップ
+ * 
+ * @param {Number} 火力
+ * @param {Number} キャップ値
+ * @return {Number} 補正後火力
+ */
+function softcap(power,cap){
+    return Math.floor(power > cap ? cap + Math.sqrt(power - cap) : power);
+}
+
+/**
+ * 砲撃戦種別を返します。
+ * 
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @return {Number} 種別
+ */
+function getHougekiKind(ship){
+    // 弾着処理
+    var item2 = ship.item2;
+    var onslots = ship.getOnSlot();
+    // 主砲
+    var mainGun = item2.stream().filter(function(item){ return item != null && item.type1 === 1; }).count();
+    // 副砲
+    var subGun = item2.stream().filter(function(item){ return item != null && item.type1 === 2; }).count();
+    // 水上機
+    var recAircraft = IntStream.range(0,item2.size()).filter(function(i){ return item2.get(i) != null && onslots[i] > 0 && item2.get(i).type1 == 7; }).count();
+    // 徹甲弾
+    var apAmmunition = item2.stream().filter(function(item){ return item != null && item.type1 === 25; }).count();
+    // 電探
+    var radar = item2.stream().filter(function(item){ return item != null && item.type1 === 8; }).count();
+    if(recAircraft > 0 && mainGun > 0){
+        // カットイン(主砲/主砲)
+        if(mainGun == 2 && apAmmunition == 1) return 6;
+        // カットイン(主砲/徹甲弾)
+        if(mainGun == 1 && subGun == 1 && apAmmunition == 1) return 5;
+        // カットイン(主砲/電探)
+        if(mainGun == 1 && subGun == 1 && radar == 1) return 4;
+        // カットイン(主砲/副砲)
+        if(mainGun >= 1 && subGun >= 1) return 3;
+        // 連続射撃
+        if(mainGun >= 2) return 2;
+    }
+    // それ以外の処理
+    // 速吸改
+    if(ship.shipId == 352){
+        // 艦上攻撃機が存在するか
+        var hasTorpedoBomber = ship.item2.stream().filter(function(item){ return item != null; }).map(function(item){ return item.type3; }).anyMatch(function(type3){ return type3 == 8; });
+        return hasTorpedoBomber ? 7 : 0; // 空撃or砲撃
+    } else {
+        switch(ship.stype){
+            case 7:  // 軽空母
+            case 11: // 正規空母
+            case 18: // 装甲空母
+                return 7; // 空撃
+            default:
+                return 0; // それ以外
+        }
+    }
+}
+
+/**
+ * 夜戦種別を返します。
+ * 
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @return {Number} 種別
+ */
+function getYasenKind(ship){
+    var item2 = ship.item2;
+    var onslots = ship.getOnSlot();
+    // 主砲
+    var mainGun = item2.stream().filter(function(item){ return item != null && item.type1 === 1; }).count();
+    // 副砲
+    var subGun = item2.stream().filter(function(item){ return item != null && item.type1 === 2; }).count();
+    // 魚雷
+    var torpedo = item2.stream().filter(function(item){ return item != null && item.type1 === 3; }).count();
+    // 夜戦CI処理
+    if(torpedo >= 2) return 3;
+    if(mainGun >= 3) return 5;
+    if(mainGun == 2 && subGun >= 1) return 4;
+    if((mainGun == 2 || mainGun == 1) && torpedo == 1) return 2;
+    if(mainGun == 2 || (mainGun == 1 && subGun >= 1) || (subGun >= 2 && (torpedo == 0 || torpedo == 1))) return 1;
+    // それ以外の処理
+    switch(ship.stype){
+        case 7:  // 軽空母
+        case 11: // 正規空母
+        case 18: // 装甲空母
+            switch(ship.shipId){
+                case 353: // Graf Zeppelin改
+                case 432: // Graf Zeppelin
+                case 433: // Saratoga
+                    return 0; // 砲撃
+                default:
+                    return 7; // 空撃
+            }
+        case 13: // 潜水艦
+        case 14: // 潜水空母
+            return 9; // 雷撃
+        default:
+            if(torpedo >= 1) return 9; // 雷撃
+            return 0; // 砲撃
+    }
+}
+
+/**
+ * 弾着ダメージ倍率を返します。
+ * 
+ * @param {Number} kind 種別
+ * @return {Number} 補正倍率
+ */
+function getDanchakuDamageMagnification(kind){
+    switch(kind){
+        case 2: return 1.2; // 連続
+        case 3: return 1.1; // 主砲+副砲
+        case 4: return 1.2; // 主砲+電探
+        case 5: return 1.3; // 主砲+徹甲弾
+        case 6: return 1.5; // 主砲+主砲
+        default:return 1.0; // 1回攻撃
+    }
+}
+
+/**
+ * 夜戦CIダメージ倍率を返します。
+ * 
+ * @param {Number} kind 種別
+ * @return {Number} 補正倍率
+ */
+function getYasenCutinDamageMagnification(kind){
+    switch(kind){
+        case 1: return 1.2;   // 連撃
+        case 2: return 1.3;   // 主魚CI
+        case 3: return 1.5;   // 魚雷CI
+        case 4: return 1.75;  // 主主副CI
+        case 5: return 2.0;   // 主砲CI
+        default:return 1.0;   // 1回攻撃
+    }
+}
+
+/**
+ * 砲撃戦の種類を返します。
+ * 
+ * @param {Number} kind 種別
+ * @return {Number} 種類
+ */
+function getHougekiKindString(kind){
+    switch(kind){
+        case 0: return "砲撃";
+        case 1: return "レーザー攻撃"
+        case 2: return "連続射撃";
+        case 3: return "カットイン(主砲/副砲)";
+        case 4: return "カットイン(主砲/電探)";
+        case 5: return "カットイン(主砲/徹甲弾)";
+        case 6: return "カットイン(主砲/主砲)";
+        case 7: return "空撃";
+        case 8: return "爆雷攻撃";
+        case 9: return "雷撃";
+        default:return "砲撃";
+    }
+}
+
+/**
+ * 夜戦砲撃の種類を返します。
+ * 
+ * @param {Number} kind 種別
+ * @return {Number} 種類
+ */
+function getYasenKindString(kind){
+    switch(kind){
+        case 0: return "砲撃";
+        case 1: return "連続射撃";
+        case 2: return "カットイン(主砲/魚雷)";
+        case 3: return "カットイン(魚雷x2)";
+        case 4: return "カットイン(主砲x2/副砲)";
+        case 5: return "カットイン(主砲x3)";
+        case 6: return "不明";
+        case 7: return "空撃";
+        case 8: return "爆雷攻撃";
+        case 9: return "雷撃";
+        default:return "砲撃";
+    }
+}
+
+/**
+ * 弾薬補正(キャップ後最終計算)
+ * 
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @param {Number} 火力
+ * @return {Number} 補正火力
+ */
+function ammoCorrection(ship,power){
+    return Math.floor(Math.min(Math.floor(ship.bull / ship.bullMax * 100) / 50,1) * power);
+}
+
+/**
+ * 耐久補正
+ * 
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @param {Number} 火力
+ * @return {Number} 補正火力
+ */
+function getHPPowerBonus(ship,isKaimakuRaigeki){
+    if(ship.isBadlyDamage()){
+        return isKaimakuRaigeki ? 0 : 0.4;
+    } else if(ship.isHalfDamage()){
+        return isKaimakuRaigeki ? 0.8 : 0.7;
+    }
+    return 1.0;
+}
+
+/**
+ * 軽巡軽量砲補正を返します。
+ * 
+ * @param {logbook.dto.ShipDto} ship 艦娘のデータ
+ * @return {Number} 補正火力
+ */
+function getCLLightGunPowerBonus(ship){
+    switch(ship.stype){
+        case 3:  // 軽巡
+        case 4:  // 雷巡
+        case 21: // 練巡
+            var item2 = ship.item2;
+            var single = item2.stream().filter(function(item){
+                return item != null;
+            }).filter(function(item){
+                switch(item.slotitemId){
+                    case 4:  // 14cm単装砲
+                    case 11: // 15.2cm単装砲
+                        return true;
+                    default:
+                        return false;
+                }
+            }).count();
+            var twin = item2.stream().filter(function(item){
+                return item != null;
+            }).filter(function(item){
+                switch(item.slotitemId){
+                    case 65:  // 15.2cm連装砲
+                    case 119: // 14cm連装砲
+                    case 139: // 15.2cm連装砲改
+                        return true;
+                    default:
+                        return false;
+                }
+            }).count();
+            return Math.sqrt(twin) * 2 + Math.sqrt(single);
+        default:
+            return 0;
+    } 
+}
+
+function toDateRestString(rest){
+    var ONE_MINUTES = 60;
+    var ONE_HOUR = 60 * 60;
+    var restSeconds = Math.floor(rest / 1000); // milli -> seconds
+    //var ONE_DAY = 60 * 60 * 24;
+    return ("0" + Math.floor(restSeconds / ONE_HOUR)).slice(-2) + ":" + ("0" + Math.floor(restSeconds % ONE_HOUR / ONE_MINUTES)).slice(-2) + ":" + ("0" + Math.floor(restSeconds % ONE_MINUTES)).slice(-2);
 }
