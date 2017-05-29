@@ -1,7 +1,7 @@
 /**
- * 画像追加 Ver2.1.5
+ * 画像追加 Ver2.1.6
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2017/05/29
+ * LastUpdate:2017/05/30
  * 
  * 所有艦娘一覧に画像を追加します。
  */
@@ -477,21 +477,32 @@ function getSynthesisItemIconImage(item2,maxEq,onSlot,canPutItem,isExItem,width,
         //合成処理
         // 落ちる対策
         if(itemIconImage != null){
-            var iconImage = resize(itemIconImage, 70, 24);
-            gc.drawImage(iconImage, 3, -2);
+            //var iconImage = trimming(itemIconImage,30,30);
+            var iconImage = resize(trimming(itemIconImage,30,30), 18, 18);
+            gc.drawImage(iconImage, 3, 1);
             iconImage.dispose(); // しておかないと落ちる
         }
         gc.setFont(alvFont);
         gc.setForeground(alvColor);
-        gc.drawString(alvText, 23, 0,true);
+        gc.drawString(alvText, 25, 0,true);
         gc.setFont(lvFont);
         gc.setForeground(lvColor);
-        gc.drawString(lvText, 21, 10,true);
+        gc.drawString(lvText, 22, 10,true);
     }
     gc.dispose();
     //font.dispose();
     //alvColor.dispose();
     //lvColor.dispose();
+    return scaled;
+}
+
+function trimming(image,width,height){
+    var scaled = getTransparentImage(width, height);
+    var gc = new GC(scaled);
+    gc.setAntialias(SWT.ON);
+    gc.setInterpolation(SWT.HIGH);
+    gc.drawImage(image,-1 * (image.getBounds().width - width) / 2,-1 * (image.getBounds().height - height) / 2);
+    gc.dispose();
     return scaled;
 }
 
