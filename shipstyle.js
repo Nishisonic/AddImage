@@ -1,7 +1,7 @@
 /**
- * 画像追加 Ver2.1.4.1
+ * 画像追加 Ver2.1.5
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2017/02/08
+ * LastUpdate:2017/05/29
  * 
  * 所有艦娘一覧に画像を追加します。
  */
@@ -38,7 +38,8 @@ ArrayList           = Java.type("java.util.ArrayList");
 Arrays              = Java.type("java.util.Arrays");
 Collections         = Java.type("java.util.Collections");
 HashMap             = Java.type("java.util.HashMap");
-LinkedHashSet       = Java.type("java.util.LinkedHashSet"); 
+LinkedHashSet       = Java.type("java.util.LinkedHashSet");
+LinkedList          = Java.type("java.util.LinkedList");
 Map                 = Java.type("java.util.Map");
 Collectors          = Java.type("java.util.stream.Collectors");
 IntStream           = Java.type("java.util.stream.IntStream");
@@ -69,14 +70,12 @@ var SUNK_IMAGE_URL         = "https://raw.githubusercontent.com/Nishisonic/AddIm
 var RED_COND_IMAGE_URL     = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Red.png";
 var ORANGE_COND_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Orange.png";
 var KIRA_COND_IMAGE_URL    = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Kira.png";
-var WEDDING_IMAGE_URL      = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Wedding.png";
+var WEDDING_IMAGE_URL      = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Wedding_Layer.png";
 var MISSION_IMAGE_URL      = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Mission.png";
 var REPAIR_IMAGE_URL       = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Repair.png";
 var NORMAL_SHIP_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Ship/Normal/";
 var DAMAGED_SHIP_IMAGE_URL = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Ship/Damaged/";
 var ITEM_ICON_IMAGE_URL    = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Item/Icon/";
-var BADLY_IMAGE_URL        = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Badly.png";
-var BADLY_SMOKE_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/BadlySmoke.png";
 var BADLY_IMAGE_URL        = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Badly.png";
 var BADLY_SMOKE_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/BadlySmoke.png";
 var HALF_IMAGE_URL         = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Half.png";
@@ -116,6 +115,11 @@ var AMMO_PROGRESS_COLOR   = new RGB(0x56, 0x23, 0x00);
 var NEXT_PROGRESS_COLOR   = new RGB(0, 0x80, 0xff);
 var EXP_PROGRESS_COLOR    = {MARRIED:new RGB(0xff, 0x80, 0),
                              NOT_MARRIED:new RGB(0, 0x80, 0xff)};
+var ON_SLOT_COLOR         = [new RGB(  0,  0,  0), // 最大搭載時
+                             new RGB(255,  0,  0), // 減少時
+                             new RGB(255,  0,255), // 全滅時
+                             new RGB(170,170,170), // 搭載なし
+                            ];
 //列番号
 var condIndex       = 12;
 var picIndex        = -1;
@@ -250,12 +254,15 @@ function create(table, data, index) {
         oldPaintDtoMap.remove(id);
     } else {
         var shipImage = getSynthesisShipImage(ship);
-        var itemIconImageList = new ArrayList();
-        var item2List = new ArrayList(shipDtoEx.ShipDto.item2);
+        var slotNum = ship.getSlotNum();
+        var itemIconImageList = new LinkedList();
+        var item2List = new LinkedList(shipDtoEx.ShipDto.item2);
+        for(var i in item2List){
+            itemIconImageList.add(getSynthesisItemIconImage(item2List.get(i),ship.getMaxeq()[i],ship.getOnSlot()[i],(slotNum > i),false));
+        }
+        // 補強増設
         item2List.add(shipDtoEx.ShipDto.slotExItem);
-        item2List.forEach(function(item2){
-            itemIconImageList.add(getSynthesisItemIconImage(item2));
-        });
+        itemIconImageList.add(getSynthesisItemIconImage(shipDtoEx.ShipDto.slotExItem,0,0,shipDtoEx.ShipDto.hasSlotEx(),true));
         paintDto = new PaintDto(shipDtoEx,shipImage,itemIconImageList);
     }
     if(paintDtoMap instanceof Map) paintDtoMap.put(id,paintDto);
@@ -374,77 +381,113 @@ function getSynthesisShipImage(ship,width,height){
     var imageSet = new LinkedHashSet();
     //撃沈
     if(ship.isSunk()){
-        imageSet.add(new Image(Display.getDefault(), shipImage, SWT.IMAGE_GRAY));
-        imageSet.add(getSunkImage());
+        imageSet.add([new Image(Display.getDefault(), shipImage, SWT.IMAGE_GRAY),0,0]);
+        imageSet.add([getSunkImage(),0,0]);
     } else {
-        imageSet.add(shipImage);
-        imageSet.add(getStateImage(ship));
-        imageSet.add(getSmokeImage(ship));
-        imageSet.add(getCondImage(ship.cond));
-        imageSet.add(getWeddingImage(ship.lv));
-        imageSet.add(getBillImage(ship));
+        imageSet.add([shipImage,0,0]);
+        imageSet.add([getStateImage(ship),0,0]);
+        imageSet.add([getSmokeImage(ship),0,0]);
+        imageSet.add([getCondImage(ship.cond),0,0]);
+        imageSet.add([getWeddingImage(ship.lv),139,18]);
+        imageSet.add([getBillImage(ship),34,-3]);
     }
-    return resize(imageSet,width,height);
+    // 160x40を取り敢えず基準に
+    return resize(synthesis(imageSet,160,40),width,height);
 }
 
 /**
  * 合成した装備アイコンの画像を返します。
  * 
  * @param {logbook.dto.ItemDto} item2 装備のデータ
+ * @param {Number} maxEq 最大搭載機数
+ * @param {Number} onSlot 現在の搭載機数
+ * @param {Number} canPutItem 装備を載せられるか
+ * @param {Number} isExItem 補助増設か
  * @param {Number} width 画像の横幅(指定しない場合は80)
  * @param {Number} height 画像の縦幅(指定しない場合は20)
  * @return {org.eclipse.swt.graphics.Image} 合成した画像
  */
-function getSynthesisItemIconImage(item2,width,height){
-    if(!(item2 instanceof ItemDto)) return null;
+function getSynthesisItemIconImage(item2,maxEq,onSlot,canPutItem,isExItem,width,height){
     var width = typeof width !== 'undefined' ?  width : IMAGE_SIZE.WIDTH;
     var height = typeof height !== 'undefined' ?  height : IMAGE_SIZE.HEIGHT;
-    var itemIconImage = getItemIconImage(item2.type3);
-    var alv = item2.alv; //熟練度
-    var alvText = function(alv){ //即時関数
-        switch(alv){
-            case 0: return "";
-            case 1: return "|";
-            case 2: return "||";
-            case 3: return "|||";
-            case 4: return "\\";
-            case 5: return "\\\\";
-            case 6: return "\\\\\\";
-            case 7: return ">>";
-        }
-    }(alv);
-    var alvFont = SWTResourceManager.getFont("Arial", 7, SWT.BOLD);
-    var alvColor = SWTResourceManager.getColor(ALV_COLOR[alv]);
-    var lv = item2.level; //改修値
-    var lvText = function(lv){ //即時関数
-        switch(lv){
-            case 0: return "";
-            case 1: return "★+1";
-            case 2: return "★+2";
-            case 3: return "★+3";
-            case 4: return "★+4";
-            case 5: return "★+5";
-            case 6: return "★+6";
-            case 7: return "★+7";
-            case 8: return "★+8";
-            case 9: return "★+9";
-            case 10:return "★ma x";
-        }
-    }(lv);
-    var lvFont = SWTResourceManager.getFont("Arial", 7, SWT.NORMAL);
-    var lvColor = SWTResourceManager.getColor(LV_COLOR[lv]);
-    //合成処理
+    // var scaled = getTransparentImage(width,height);
     var scaled = new Image(Display.getDefault(), width, height);
     var gc = new GC(scaled);
     gc.setAntialias(SWT.ON);
     gc.setInterpolation(SWT.HIGH);
-    gc.drawImage(itemIconImage, 0, 0, itemIconImage.getBounds().width, itemIconImage.getBounds().height, 0, 0, width, height);
-    gc.setFont(alvFont);
-    gc.setForeground(alvColor);
-    gc.drawString(alvText, 23, 0);
-    gc.setFont(lvFont);
-    gc.setForeground(lvColor);
-    gc.drawString(lvText, 21, 10);
+    var onSlotFont = SWTResourceManager.getFont("Arial", 7, SWT.NORMAL);
+    var onSlotColor = function(){
+        if(item2 != null && item2.isPlane() && maxEq > 0){
+            if(maxEq == onSlot){
+                return SWTResourceManager.getColor(ON_SLOT_COLOR[0]);
+            }
+            if(onSlot == 0){
+                return SWTResourceManager.getColor(ON_SLOT_COLOR[2]);
+            }
+            return SWTResourceManager.getColor(ON_SLOT_COLOR[1]);
+        }
+        return SWTResourceManager.getColor(ON_SLOT_COLOR[3]);
+    }();
+    if(canPutItem){
+        gc.setFont(onSlotFont);
+        gc.setForeground(onSlotColor);
+        gc.drawString((isExItem ? "-" : onSlot), 40, 0,true);
+    }
+    if(item2 instanceof ItemDto){
+        var itemIconImage = function(type3){
+            var result = getItemIconImage(type3);
+            if(result != null) return result;
+            // 新アイコン対策
+            result = getItemIconImage(0);
+            return result;
+        }(item2.type3);
+        var alv = item2.alv; //熟練度
+        var alvText = function(alv){ //即時関数
+            switch(alv){
+                case 0: return "";
+                case 1: return "|";
+                case 2: return "||";
+                case 3: return "|||";
+                case 4: return "\\";
+                case 5: return "\\\\";
+                case 6: return "\\\\\\";
+                case 7: return ">>";
+            }
+        }(alv);
+        var alvFont = SWTResourceManager.getFont("Arial", 7, SWT.BOLD);
+        var alvColor = SWTResourceManager.getColor(ALV_COLOR[alv]);
+        var lv = item2.level; //改修値
+        var lvText = function(lv){ //即時関数
+            switch(lv){
+                case 0: return "";
+                case 1: return "★+1";
+                case 2: return "★+2";
+                case 3: return "★+3";
+                case 4: return "★+4";
+                case 5: return "★+5";
+                case 6: return "★+6";
+                case 7: return "★+7";
+                case 8: return "★+8";
+                case 9: return "★+9";
+                case 10:return "★ma x";
+            }
+        }(lv);
+        var lvFont = SWTResourceManager.getFont("Arial", 7, SWT.NORMAL);
+        var lvColor = SWTResourceManager.getColor(LV_COLOR[lv]);
+        //合成処理
+        // 落ちる対策
+        if(itemIconImage != null){
+            var iconImage = resize(itemIconImage, 70, 24);
+            gc.drawImage(iconImage, 3, -2);
+            iconImage.dispose(); // しておかないと落ちる
+        }
+        gc.setFont(alvFont);
+        gc.setForeground(alvColor);
+        gc.drawString(alvText, 23, 0,true);
+        gc.setFont(lvFont);
+        gc.setForeground(lvColor);
+        gc.drawString(lvText, 21, 10,true);
+    }
     gc.dispose();
     //font.dispose();
     //alvColor.dispose();
@@ -453,25 +496,59 @@ function getSynthesisItemIconImage(item2,width,height){
 }
 
 /**
- * 画像のSetをリサイズ、合成して一つの画像にして返します。
+ * 画像をリサイズして返します。
  * 
- * @param {java.util.Set<Image>} imageSet 画像のSet
+ * @param {Image} image 画像
+ * @param {Number} width リサイズ後の横幅
+ * @param {Number} height リサイズ後の縦幅
+ * @return {org.eclipse.swt.graphics.Image} リサイズした画像
+ */
+function resize(image,width,height){
+    if(image == null) return null;
+    var scaled = getTransparentImage(width,height);
+    var gc = new GC(scaled);
+    gc.setAntialias(SWT.ON);
+    gc.setInterpolation(SWT.HIGH);
+    gc.drawImage(image, 0, 0, image.getBounds().width, image.getBounds().height, 0, 0, width, height);
+    gc.dispose();
+    return scaled;
+}
+
+/**
+ * 画像のSetを合成して一つの画像にして返します。
+ * 
+ * @param {java.util.Set<[Image,x,y]>} imageSet 画像のSet
  * @param {Number} width 画像の横幅
  * @param {Number} height 画像の縦幅
  * @return {org.eclipse.swt.graphics.Image} 合成した画像
  */
-function resize(imageSet,width,height){
-    var scaled = new Image(Display.getDefault(), width, height);
+function synthesis(imageSet,width,height){
+    var scaled = getTransparentImage(width,height);
     var gc = new GC(scaled);
     gc.setAntialias(SWT.ON);
     gc.setInterpolation(SWT.HIGH);
-    imageSet.stream().filter(function(image){
-        return image instanceof Image;
-    }).forEach(function(image){
-        gc.drawImage(image, 0, 0, image.getBounds().width, image.getBounds().height, 0, 0, width, height);
+    imageSet.stream().filter(function(imageData){
+        return imageData[0] instanceof Image;
+    }).forEach(function(imageData){
+        gc.drawImage(imageData[0], imageData[1], imageData[2]);
     });
     gc.dispose();
     return scaled;
+}
+
+/**
+ * 透明の画像を返します。
+ * 
+ * @param {Number} width  画像の横幅
+ * @param {Number} height 画像の縦幅
+ */
+function getTransparentImage(width,height){
+    var src = new Image(Display.getDefault(), width, height);        
+    var imageData = src.getImageData();
+    imageData.transparentPixel = imageData.getPixel(0, 0);
+    src.dispose();
+    // ここまで
+    return new Image(Display.getDefault(), imageData);
 }
 
 /**
@@ -560,7 +637,7 @@ function getKiraCondImage(){
  * @return {org.eclipse.swt.graphics.Image} 指輪のレイヤー画像(満たしていない場合はnull)
  */
 function getWeddingImage(lv) {
-    if (lv > 99) return getLayerImage("Wedding", WEDDING_IMAGE_URL);
+    if (lv > 99) return getLayerImage("Wedding_Layer", WEDDING_IMAGE_URL);
     return null;
 }
 
@@ -833,14 +910,18 @@ function toItemData(index,_ship){
         default: return null;
     }
     result += " \n ";
-    result += "昼戦: " + ((ship.stype == 13 || ship.stype == 14) ? "雷撃" : (getHougekiKindString(getHougekiKind(ship)) + " - 威力:" + getHougekiPower(ship))) + " \n ";
-    result += "夜戦: " + getYasenKindString(getYasenKind(ship)) + " - 威力:" + getYasenPower(ship) + " \n ";
+    result += "昼戦: " + ((ship.stype == 13 || ship.stype == 14) ? "雷撃" : (getHougekiKindString(getHougekiKind(ship)) + " - 威力: " + getHougekiPower(ship))) + " \n ";
+    result += "夜戦: " + getYasenKindString(getYasenKind(ship)) + " - 威力: " + getYasenPower(ship) + " \n ";
     if((canKaimakuRaigeki(ship) || canRaigeki(ship)) && getTaisenKind(ship) > 0){
-        result += "雷撃: " + getRaigekiPower(ship) + " / 対潜:" + getTaisenPower(ship) + " \n ";
+        result += "雷撃: " + getRaigekiPower(ship) + " / 対潜: " + getTaisenPower(ship) + " \n ";
     } else if(canKaimakuRaigeki(ship) || canRaigeki(ship)){
         result += "雷撃: " + getRaigekiPower(ship) + " \n ";
     } else if(getTaisenKind(ship) > 0){
         result += "対潜: " + getTaisenPower(ship) + " \n ";
+    }
+    var taikuCutinID = getTaikuCutinID(ship);
+    if(taikuCutinID > 0){
+        result += "対空: " + toTaikuCutinString(taikuCutinID) + " \n ";
     }
     var calcTaiku = new CalcTaiku();
     result += "加重対空: " + calcTaiku.getFriendKajuuValue(ship) + " (割合撃墜: " + Number(calcTaiku.getFriendProportionalShootDown(ship) * 100).toFixed(2) + "%) ";
@@ -936,7 +1017,7 @@ function toHpDetail(index,_ship){
  */
 function toExpeditionString(index,ship){
     if(index == condIndex && ship != null){
-        return " あと " + Math.max(Math.ceil((ship.data.cond - 49) / 3),0) + " 回遠征可能 ";
+        return ship.data.cond >= 49 ? " あと " + Math.max(Math.ceil((ship.data.cond - 49) / 3),0) + " 回遠征可能 " : " 完全回復まで 約 " + ("00" + (Math.ceil((49 - ship.data.cond) / 3) * 3)).slice(-2) + ":00 ";
     }
     return null;
 }
@@ -949,11 +1030,12 @@ var PaintHandler = new Listener(function(event) {
     var gc = event.gc;
     var old = gc.background;
     var rate = function(index){
+        if(ship == null) return 0;
         switch(index){
             case hpIndex:   return ship.nowhp / ship.maxhp;
             case fuelIndex: return ship.fuel / ship.fuelMax;
             case ammoIndex: return ship.bull / ship.bullMax;
-            //case lvIndex: return ship.lv > 99 ? ship.lv / 155 : ship.lv / 99;
+            //case lvIndex: return s.lv > 99 ? s.lv / 155 : s.lv / 99;
             case nextIndex: return ship.expraito;
             case expIndex:  return ship.lv > 99 ? ship.exp / 4470000 : ship.exp / 1000000;
             default:        return null;
@@ -969,6 +1051,7 @@ var PaintHandler = new Listener(function(event) {
             //case lvIndex: return SWTResourceManager.getColor(LV_PROGRESS_COLOR);
             case nextIndex: return SWTResourceManager.getColor(NEXT_PROGRESS_COLOR);
             case expIndex:  return ship.lv > 99 ? SWTResourceManager.getColor(EXP_PROGRESS_COLOR.MARRIED) : SWTResourceManager.getColor(EXP_PROGRESS_COLOR.NOT_MARRIED);
+            case itemTypeExIndex: return Display.getDefault().getSystemColor(SWT.COLOR_DARK_GRAY);
             default:        return null;
         }
     }(event.index);
@@ -1116,19 +1199,22 @@ function loadItemIconImage(){
  */
 function getHougekiPower(ship){
     var hougekiPower;
+    var item2 = new ArrayList(ship.item2);
+    item2.add(ship.slotExItem);
     switch(getHougekiKind(ship)){
         case 7:
             var rai = ship.slotParam.raig;
             var baku = ship.slotParam.baku;
-            hougekiPower = Math.floor((ship.karyoku + rai + getHougekiKaishuPower(ship.item2) + Math.floor(baku * 1.3)) * 1.5) + 55;
+            hougekiPower = Math.floor((ship.karyoku + rai + getHougekiKaishuPower(item2) + Math.floor(baku * 1.3)) * 1.5) + 55;
             break;
         default:
-            hougekiPower = (ship.karyoku + getHougekiKaishuPower(ship.item2) + 5);
+            hougekiPower = (ship.karyoku + getHougekiKaishuPower(item2) + 5);
             break;
     }
     hougekiPower *= getHPPowerBonus(ship,false);
     hougekiPower += getCLLightGunPowerBonus(ship);
-    return ammoCorrection(ship,softcap(hougekiPower,150) * getDanchakuDamageMagnification(getHougekiKind(ship)));
+    hougekiPower += getZaraGunFitPowerBonus(ship);
+    return ammoCorrection(ship,softcap(hougekiPower,180) * getDanchakuDamageMagnification(getHougekiKind(ship)));
 }
 
 /**
@@ -1138,8 +1224,10 @@ function getHougekiPower(ship){
  * @return {Number} 対潜火力
  */
 function getTaisenPower(ship){
+    var item2 = new ArrayList(ship.item2);
+    item2.add(ship.slotExItem);
     // 対潜 = √素対潜 × 2 + 装備対潜 × 1.5 + 装備改修補正(対潜) + 攻撃別定数
-    var taisenItem = ship.item2.stream().filter(function(item){
+    var taisenItem = item2.stream().filter(function(item){
         return item != null;
     }).filter(function(item){
         switch(item.type2){
@@ -1150,13 +1238,14 @@ function getTaisenPower(ship){
             case 15: // 爆雷
             case 25: // オートジャイロ
             case 26: // 対潜哨戒機
+            case 40: // 大型ソナー
             //case 41: // 大型飛行艇
                 return true;
             default:
                 return false;
         }
     }).mapToInt(function(item){
-        return item.taisen;
+        return item.param.taisen;
     }).sum();
     var taisenShip = ship.taisen - ship.slotParam.taisen;
     var taisenBasicPower;
@@ -1174,7 +1263,7 @@ function getTaisenPower(ship){
             return 0;
     }
     
-    var taisenPower = (Math.sqrt(taisenShip) * 2 + taisenItem * 1.5 + getTaisenKaishuPower(ship.item2) + taisenBasicPower) * (hasTaisenSynergy(ship.item2) ? 1.15 : 1.0) * getHPPowerBonus(ship,false);
+    var taisenPower = (Math.sqrt(taisenShip) * 2 + taisenItem * 1.5 + getTaisenKaishuPower(item2) + taisenBasicPower) * getHPPowerBonus(ship,false) * (hasTaisenSynergy(item2) ? 1.15 : 1.0) * (1 + (hasNewTaisenSynergy(item2) ? 0.15 : 0) + (hasBakuraiSynergy(item2) ? 0.1 : 0));
     return ammoCorrection(ship,softcap(taisenPower,100));
 }
 
@@ -1185,7 +1274,9 @@ function getTaisenPower(ship){
  * @return {Number} 夜戦火力
  */
 function getYasenPower(ship){
-    var yasenPower = (ship.karyoku + ship.raisou + getYasenKaishuPower(ship.item2)) * getYasenCutinDamageMagnification(getYasenKind(ship)) * getHPPowerBonus(ship,false) + getCLLightGunPowerBonus(ship);
+    var item2 = new ArrayList(ship.item2);
+    item2.add(ship.slotExItem);
+    var yasenPower = (ship.karyoku + ship.raisou + getYasenKaishuPower(item2)) * getYasenCutinDamageMagnification(getYasenKind(ship)) * getHPPowerBonus(ship,false) + getCLLightGunPowerBonus(ship) + getZaraGunFitPowerBonus(ship);
     return ammoCorrection(ship,softcap(yasenPower,300));
 }
 
@@ -1196,8 +1287,10 @@ function getYasenPower(ship){
  * @return {String} 雷撃戦火力
  */
 function getRaigekiPower(ship){
-    var kRaigekiPower = (ship.raisou + getRaigekiKaishuPower(ship.item2) + 5) * getHPPowerBonus(ship,true);
-    var raigekiPower = (ship.raisou + getRaigekiKaishuPower(ship.item2) + 5) * getHPPowerBonus(ship,false);
+    var item2 = new ArrayList(ship.item2);
+    item2.add(ship.slotExItem);
+    var kRaigekiPower = (ship.raisou + getRaigekiKaishuPower(item2) + 5) * getHPPowerBonus(ship,true);
+    var raigekiPower = (ship.raisou + getRaigekiKaishuPower(item2) + 5) * getHPPowerBonus(ship,false);
     if(canKaimakuRaigeki(ship) && canRaigeki(ship)){
         return ammoCorrection(ship,softcap(kRaigekiPower,150)) + " - " + ammoCorrection(ship,softcap(raigekiPower,150));
     } else if(canKaimakuRaigeki(ship)){
@@ -1215,7 +1308,8 @@ function getRaigekiPower(ship){
  * @return {String} 航空威力
  */
 function getKoukuPower(ship){
-    var item2 = ship.item2;
+    var item2 = new ArrayList(ship.item2);
+    // item2.add(ship.slotExItem);
     var onslots = ship.getOnSlot();
     // 運営式
     var injectionPower = IntStream.range(0,item2.size()).filter(function(i){
@@ -1227,7 +1321,7 @@ function getKoukuPower(ship){
             default:
                 return 0;
         }
-    }).sum() * getHPPowerBonus(ship,false);
+    }).max().orElse(0) * getHPPowerBonus(ship,false);
     var airPower = IntStream.range(0,item2.size()).filter(function(i){
         return item2.get(i) != null && onslots[i] > 0;
     }).mapToDouble(function(i){
@@ -1242,7 +1336,7 @@ function getKoukuPower(ship){
             default:
                 return 0;
         }
-    }).sum() * getHPPowerBonus(ship,false);
+    }).max().orElse(0) * getHPPowerBonus(ship,false);
     if(injectionPower > 0){
         return ammoCorrection(ship,softcap(injectionPower,150)) + " - " + ammoCorrection(ship,softcap(airPower,150));
     } else if(airPower > 0){
@@ -1276,7 +1370,9 @@ function canKaimakuRaigeki(ship){
         case 14: // 潜水空母
             if(ship.lv >= 10) return true;
         default:
-            return ship.item2.stream().filter(function(item){
+            var item2 = new ArrayList(ship.item2);
+            item2.add(ship.slotExItem);
+            return item2.stream().filter(function(item){
                 return item != null;
             }).anyMatch(function(item){
                 return item.type2 == 22; // 特殊潜航艇
@@ -1291,9 +1387,11 @@ function canKaimakuRaigeki(ship){
  * @return {Number} -1なら攻撃なし、7なら空撃、8なら爆雷攻撃
  */
 function getTaisenKind(ship){
+    var item2 = new ArrayList(ship.item2);
+    item2.add(ship.slotExItem);
     switch (ship.stype) {
         case 7: // 軽空母
-            return ship.item2.stream().filter(function(item){
+            return item2.stream().filter(function(item){
                 return item != null && item.param.taisen > 0;
             }).map(function(item){
                 return item.type2;
@@ -1310,7 +1408,7 @@ function getTaisenKind(ship){
         case 10: // 航空戦艦
         case 16: // 水上機母艦
         case 17: // 揚陸艦
-            return ship.item2.stream().filter(function(item){
+            return item2.stream().filter(function(item){
                 return item != null && item.param.taisen > 0;
             }).map(function(item){
                 return item.type2;
@@ -1331,7 +1429,7 @@ function getTaisenKind(ship){
             if(taisenShip > 0){
                 // 速吸改
                 if(ship.shipId == 352){
-                    return ship.item2.stream().filter(function(item){
+                    return item2.stream().filter(function(item){
                         return item != null && item.param.taisen > 0;
                     }).map(function(item){
                         return item.type2;
@@ -1353,15 +1451,58 @@ function getTaisenKind(ship){
 }
 
 /**
- * 対潜シナジーがあるかを返します。
- * 
- * @param {logbook.dto.ItemDto} item2 装備データ
- * @return {boolean} trueならシナジーあり、falseなら無し
+ * (従来)対潜シナジー
+ * ソナー + 爆雷"投射機"
+ * 1.15倍補正
  */
 function hasTaisenSynergy(item2){
-     // 爆雷=17,ソナー=18 両方必要なので、処理を変えないこと
-     return item2.stream().filter(function(item){ return item != null; }).map(function(item){ return item.type3; }).anyMatch(function(type3){ return type3 === 17; })
-         && item2.stream().filter(function(item){ return item != null; }).map(function(item){ return item.type3; }).anyMatch(function(type3){ return type3 === 18; });
+    // 爆雷投射機=17,ソナー=18 両方必要なので、処理を変えないこと
+    return item2.stream().filter(function(item){ return item != null; }).anyMatch(function(item){ return !isBakurai(item) && item.type3 === 17; })
+        && item2.stream().filter(function(item){ return item != null; }).anyMatch(function(item){ return item.type3 === 18; });
+}
+
+/**
+ * (新)対潜シナジー
+ * ソナー + 爆雷
+ * 1.15倍補正
+ */
+function hasNewTaisenSynergy(item2){
+    // 爆雷,ソナー=18 両方必要なので、処理を変えないこと
+    return item2.stream().filter(function(item){ return item != null; }).anyMatch(function(item){ return isBakurai(item); })
+        && item2.stream().filter(function(item){ return item != null; }).anyMatch(function(item){ return item.type3 === 18; });
+}
+
+/**
+ * 新爆雷シナジー
+ * 爆雷"投射機" + 爆雷
+ * 1.1倍補正
+ */
+function hasBakuraiSynergy(item2){
+    var bakuraiNum = get95BakuraiNum(item2) + get2BakuraiNum(item2);
+    var hasBakurai = bakuraiNum > 0;
+    return (item2.stream().filter(function(item){ return item != null && item.type3 === 17; }).count() - bakuraiNum > 0) && hasBakurai;
+}
+
+/**
+ * 九五式爆雷の数
+ */
+function get95BakuraiNum(item2){
+    return item2.stream().filter(function(item){ return item != null; }).map(function(item){ return item.slotitemId; }).filter(function(id){ return id === 226; }).count();
+}
+
+/**
+ * 二式爆雷の数
+ */
+function get2BakuraiNum(item2){
+    return item2.stream().filter(function(item){ return item != null; }).map(function(item){ return item.slotitemId; }).filter(function(id){ return id === 227; }).count();
+}
+
+/**
+ * 爆雷かどうか
+ * ※爆雷投射機ではないことに注意
+ */
+function isBakurai(item){
+    return item.slotitemId === 226 || item.slotitemId === 227;
 }
 
 /**
@@ -1463,14 +1604,15 @@ function softcap(power,cap){
  */
 function getHougekiKind(ship){
     // 弾着処理
-    var item2 = ship.item2;
+    var item2 = new ArrayList(ship.item2);
+    item2.add(ship.slotExItem);
     var onslots = ship.getOnSlot();
     // 主砲
     var mainGun = item2.stream().filter(function(item){ return item != null && item.type1 === 1; }).count();
     // 副砲
     var subGun = item2.stream().filter(function(item){ return item != null && item.type1 === 2; }).count();
-    // 水上機
-    var recAircraft = IntStream.range(0,item2.size()).filter(function(i){ return item2.get(i) != null && onslots[i] > 0 && item2.get(i).type1 == 7; }).count();
+    // 水上機 (補強増設対処)
+    var recAircraft = IntStream.range(0,item2.size() - 1).filter(function(i){ return item2.get(i) != null && onslots[i] > 0 && item2.get(i).type1 == 7; }).count();
     // 徹甲弾
     var apAmmunition = item2.stream().filter(function(item){ return item != null && item.type1 === 25; }).count();
     // 電探
@@ -1491,7 +1633,7 @@ function getHougekiKind(ship){
     // 速吸改
     if(ship.shipId == 352){
         // 艦上攻撃機が存在するか
-        var hasTorpedoBomber = ship.item2.stream().filter(function(item){ return item != null; }).map(function(item){ return item.type3; }).anyMatch(function(type3){ return type3 == 8; });
+        var hasTorpedoBomber = item2.stream().filter(function(item){ return item != null; }).map(function(item){ return item.type3; }).anyMatch(function(type3){ return type3 == 8; });
         return hasTorpedoBomber ? 7 : 0; // 空撃or砲撃
     } else {
         switch(ship.stype){
@@ -1512,7 +1654,8 @@ function getHougekiKind(ship){
  * @return {Number} 種別
  */
 function getYasenKind(ship){
-    var item2 = ship.item2;
+    var item2 = new ArrayList(ship.item2);
+    item2.add(ship.slotExItem);
     var onslots = ship.getOnSlot();
     // 主砲
     var mainGun = item2.stream().filter(function(item){ return item != null && item.type1 === 1; }).count();
@@ -1521,9 +1664,15 @@ function getYasenKind(ship){
     // 魚雷
     var torpedo = item2.stream().filter(function(item){ return item != null && item.type1 === 3; }).count();
     // 夜戦CI処理
-    if(torpedo >= 2) return 3;
     if(mainGun >= 3) return 5;
     if(mainGun == 2 && subGun >= 1) return 4;
+    if(torpedo >= 2){
+        var lateTorpedo = item2.stream().filter(function(item){ return item != null }).mapToInt(function(item){ return item.getSlotitemId(); }).filter(function(id){ return id == 213 || id == 214; }).count();
+        var radiolocator = item2.stream().filter(function(item){ return item != null }).mapToInt(function(item){ return item.type1; }).filter(function(type1){ return type1 == 42; }).count();
+        if(lateTorpedo >= 1 && radiolocator >= 1) return 3.1; // 後電CI
+        if(lateTorpedo >= 2) return 3.2; // 後魚CI
+        return 3; // 魚雷CI
+    } 
     if((mainGun == 2 || mainGun == 1) && torpedo == 1) return 2;
     if(mainGun == 2 || (mainGun == 1 && subGun >= 1) || (subGun >= 2 && (torpedo == 0 || torpedo == 1))) return 1;
     // それ以外の処理
@@ -1576,6 +1725,8 @@ function getYasenCutinDamageMagnification(kind){
         case 1: return 1.2;   // 連撃
         case 2: return 1.3;   // 主魚CI
         case 3: return 1.5;   // 魚雷CI
+        case 3.1: return 1.75;// 後電CI
+        case 3.2: return 1.6; // 後魚CI
         case 4: return 1.75;  // 主主副CI
         case 5: return 2.0;   // 主砲CI
         default:return 1.0;   // 1回攻撃
@@ -1616,6 +1767,8 @@ function getYasenKindString(kind){
         case 1: return "連続射撃";
         case 2: return "カットイン(主砲/魚雷)";
         case 3: return "カットイン(魚雷x2)";
+        case 3.1: return "カットイン(魚雷/逆探)";
+        case 3.2: return "カットイン(後魚x2)";
         case 4: return "カットイン(主砲x2/副砲)";
         case 5: return "カットイン(主砲x3)";
         case 6: return "不明";
@@ -1664,7 +1817,8 @@ function getCLLightGunPowerBonus(ship){
         case 3:  // 軽巡
         case 4:  // 雷巡
         case 21: // 練巡
-            var item2 = ship.item2;
+            var item2 = new ArrayList(ship.item2);
+            item2.add(ship.slotExItem);
             var single = item2.stream().filter(function(item){
                 return item != null;
             }).filter(function(item){
@@ -1700,4 +1854,187 @@ function toDateRestString(rest){
     var restSeconds = Math.floor(rest / 1000); // milli -> seconds
     //var ONE_DAY = 60 * 60 * 24;
     return ("0" + Math.floor(restSeconds / ONE_HOUR)).slice(-2) + ":" + ("0" + Math.floor(restSeconds % ONE_HOUR / ONE_MINUTES)).slice(-2) + ":" + ("0" + Math.floor(restSeconds % ONE_MINUTES)).slice(-2);
+}
+
+// 七四式から大体コピー
+function getTaikuCutinID(ship){
+    var item2 = new ArrayList(ship.item2);
+    item2.add(ship.slotExItem);
+    var highangle = 0;
+    var highangle_director = 0;
+    var director = 0;
+    var radar = 0;
+    var aaradar = 0;
+    var maingunl = 0;
+    var aashell = 0;
+    var aagun = 0;
+    var aagun_concentrated = 0;
+
+    for(var i in item2){
+        var item = item2.get(i);
+        if(item == null) continue;
+
+        // 高角砲
+        if(item.type3 == 16){
+            if(item.param.taiku >= 8){
+                highangle_director++;
+            }
+        }
+        // 高射装置
+        else if(item.type2 == 36){
+            director++;
+        }
+        // 電探
+        else if(item.type1 == 8){
+            if(item.param.taiku >= 2){
+                aaradar++;
+            }
+            radar++;
+        }
+        // 大口径主砲
+        else if(item.type2 == 3){
+            maingunl++;
+        }
+        // 対空強化弾
+        else if(item.type2 == 18){
+            aashell++;
+        }
+        // 対空機銃
+        else if(item.type2 == 21){
+            if(item.param.taiku >= 9){
+                aagun_concentrated++;
+            }
+            aagun++;
+        }
+    }
+
+    // 固有カットイン
+    switch ( ship.shipId ) {
+        case 421: //秋月
+        case 330: //秋月改
+        case 422: //照月
+        case 346: //照月改
+        case 423: //初月
+        case 357: //初月改
+            if ( highangle >= 2 && radar >= 1 ) {
+                return 1;
+            }
+            if ( highangle >= 1 && radar >= 1 ) {
+                return 2;
+            }
+            if ( highangle >= 2 ) {
+                return 3;
+            }
+            break;
+
+        case 428: //摩耶改二
+            if ( highangle >= 1 && aagun_concentrated >= 1 ) {
+                if ( aaradar >= 1 )
+                    return 10;
+
+                return 11;
+            }
+            break;
+
+        case 141: //五十鈴改二
+            if ( highangle >= 1 && aagun >= 1 ) {
+                if ( aaradar >= 1 )
+                    return 14;
+                else
+                    return 15;
+            }
+            break;
+
+        case 470: //霞改二乙
+            if ( highangle >= 1 && aagun >= 1 ) {
+                if ( aaradar >= 1 )
+                    return 16;
+                else
+                    return 17;
+            }
+            break;
+
+        case 418: //皐月改二
+            if ( aagun_concentrated >= 1 )
+                return 18;
+            break;
+
+        case 487: //鬼怒改二
+            if ( aagun_concentrated >= 1 ) {
+                if ( highangle - highangle_director >= 1 )
+                    return 19;
+                return 20;
+            }
+            break;
+    }
+
+
+
+    if ( maingunl >= 1 && aashell >= 1 && director >= 1 && aaradar >= 1 ) {
+        return 4;
+    }
+    if ( highangle_director >= 2 && aaradar >= 1 ) {
+        return 5;
+    }
+    if ( maingunl >= 1 && aashell >= 1 && director >= 1 ) {
+        return 6;
+    }
+    if ( highangle >= 1 && director >= 1 && aaradar >= 1 ) {
+        return 7;
+    }
+    if ( highangle_director >= 1 && aaradar >= 1 ) {
+        return 8;
+    }
+    if ( highangle >= 1 && director >= 1 ) {
+        return 9;
+    }
+
+    if ( aagun_concentrated >= 1 && aagun >= 2 && aaradar >= 1 ) {	//注: 機銃2なのは集中機銃がダブるため
+        return 12;
+    }
+
+    return 0;
+}
+
+function toTaikuCutinString(id){
+    switch(id){
+        case 1: return "高角砲x2/電探";
+        case 2: return "高角砲/電探";
+        case 3: return "高角砲x2";
+        case 4: return "大口径主砲/三式弾/高射装置/電探";
+        case 5: return "高角砲+高射装置x2/電探";
+        case 6: return "大口径主砲/三式弾/高射装置";
+        case 7: return "高角砲/高射装置/電探";
+        case 8: return "高角砲+高射装置/電探";
+        case 9: return "高角砲/高射装置";
+        case 10:return "高角砲/集中機銃/電探";
+        case 11:return "高角砲/集中機銃";
+        case 12:return "集中機銃/機銃/電探";
+        case 14:return "高角砲/対空機銃/電探";
+        case 15:return "高角砲/対空機銃";
+        case 16:return "高角砲/対空機銃/電探";
+        case 17:return "高角砲/対空機銃";
+        case 18:return "集中機銃";
+        case 19:return "高角砲/集中機銃";
+        case 20:return "集中機銃";
+        default:return "不明("+id+")";
+    }
+}
+
+function getZaraGunFitPowerBonus(ship){
+    switch(ship.getShipId()){
+        case 448: // Zara
+        case 358: // Zara改
+        case 496: // Zara due
+        case 449: // Pola
+        case 361: // Pola改
+            var item2 = new LinkedList(ship.item2);
+            if(ship instanceof ShipDto) item2.add(ship.slotExItem);
+            return Math.sqrt(item2.stream().filter(function(item){
+                // 203mm／53 連装砲
+                return item != null && item.slotitemId == 162;
+            }).count());
+        default:
+            return 0;
+    }
 }
