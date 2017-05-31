@@ -1,5 +1,5 @@
 /**
- * 画像追加 Ver2.1.7
+ * 画像追加 Ver2.1.7.1
  * Author:Nishisonic,Nekopanda
  * LastUpdate:2017/05/31
  * 
@@ -354,9 +354,6 @@ function create(table, data, index) {
  * テーブルリロード時に行作成が終了したときに呼び出されます。
  */
 function end() {
-    var totalMemory =  java.lang.Runtime.getRuntime().totalMemory() / 1024 / 1024;
-    var freeMemory = java.lang.Runtime.getRuntime().freeMemory() / 1024 / 1024;
-    print(Math.round(totalMemory - freeMemory) + " / " + Math.round(totalMemory) + "MB")
     //次回読み込み短縮のために一時保存
     if(shipTable instanceof AbstractTableDialog) setTmpData(shipTable + "_PaintDtoMap",paintDtoMap);
     if(oldPaintDtoMap instanceof Map){
