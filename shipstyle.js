@@ -1,7 +1,7 @@
 /**
- * 画像追加 Ver2.1.6
+ * 画像追加 Ver2.1.7
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2017/05/30
+ * LastUpdate:2017/05/31
  * 
  * 所有艦娘一覧に画像を追加します。
  */
@@ -354,6 +354,9 @@ function create(table, data, index) {
  * テーブルリロード時に行作成が終了したときに呼び出されます。
  */
 function end() {
+    var totalMemory =  java.lang.Runtime.getRuntime().totalMemory() / 1024 / 1024;
+    var freeMemory = java.lang.Runtime.getRuntime().freeMemory() / 1024 / 1024;
+    print(Math.round(totalMemory - freeMemory) + " / " + Math.round(totalMemory) + "MB")
     //次回読み込み短縮のために一時保存
     if(shipTable instanceof AbstractTableDialog) setTmpData(shipTable + "_PaintDtoMap",paintDtoMap);
     if(oldPaintDtoMap instanceof Map){
@@ -392,7 +395,10 @@ function getSynthesisShipImage(ship,width,height){
         imageSet.add([getBillImage(ship),34,-3]);
     }
     // 160x40を取り敢えず基準に
-    return resize(synthesis(imageSet,160,40),width,height);
+    var tmpImage = compose(imageSet,160,40);
+    var resultImage = resize(tmpImage,width,height);
+    tmpImage.dispose();
+    return resultImage;
 }
 
 /**
@@ -460,15 +466,15 @@ function getSynthesisItemIconImage(item2,maxEq,onSlot,canPutItem,isExItem,width,
         var lvText = function(lv){ //即時関数
             switch(lv){
                 case 0: return "";
-                case 1: return "★+1";
-                case 2: return "★+2";
-                case 3: return "★+3";
-                case 4: return "★+4";
-                case 5: return "★+5";
-                case 6: return "★+6";
-                case 7: return "★+7";
-                case 8: return "★+8";
-                case 9: return "★+9";
+                case 1: return " ★+1";
+                case 2: return " ★+2";
+                case 3: return " ★+3";
+                case 4: return " ★+4";
+                case 5: return " ★+5";
+                case 6: return " ★+6";
+                case 7: return " ★+7";
+                case 8: return " ★+8";
+                case 9: return " ★+9";
                 case 10:return "★ma x";
             }
         }(lv);
@@ -478,8 +484,10 @@ function getSynthesisItemIconImage(item2,maxEq,onSlot,canPutItem,isExItem,width,
         // 落ちる対策
         if(itemIconImage != null){
             //var iconImage = trimming(itemIconImage,30,30);
-            var iconImage = resize(trimming(itemIconImage,30,30), 18, 18);
+            var trimImage = trimming(itemIconImage,30,30);
+            var iconImage = resize(trimImage, 18, 18);
             gc.drawImage(iconImage, 3, 1);
+            trimImage.dispose(); // しておかないと落ちる
             iconImage.dispose(); // しておかないと落ちる
         }
         gc.setFont(alvFont);
@@ -533,7 +541,7 @@ function resize(image,width,height){
  * @param {Number} height 画像の縦幅
  * @return {org.eclipse.swt.graphics.Image} 合成した画像
  */
-function synthesis(imageSet,width,height){
+function compose(imageSet,width,height){
     var scaled = getTransparentImage(width,height);
     var gc = new GC(scaled);
     gc.setAntialias(SWT.ON);
