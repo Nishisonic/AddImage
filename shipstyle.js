@@ -2,7 +2,7 @@
  * 画像追加 Ver2.1.7.1
  * Author:Nishisonic,Nekopanda
  * LastUpdate:2017/05/31
- * 
+ *
  * 所有艦娘一覧に画像を追加します。
  */
 
@@ -148,7 +148,7 @@ var ndockShips;
 
 /**
  * テーブルリロード時に行作成前に呼び出されます。
- * 
+ *
  * @param {java.lang.String[]} header テーブルのヘッダ
  */
 function begin(header) {
@@ -180,7 +180,7 @@ function begin(header) {
 
 /**
  * 艦娘のcond値からcond色を取得します。
- * 
+ *
  * @param {Number} cond 艦娘のcond値
  * @return {org.eclipse.swt.graphics.Color} cond色
  */
@@ -194,7 +194,7 @@ function getTableCondColor(cond) {
 
 /**
  * 行作成時に呼び出されます
- * 
+ *
  * @param {org.eclipse.swt.widgets.Table} table テーブル
  * @param {java.lang.Comparable[]} data 該当行の項目データ
  * @param {int} index 行番号（上から0始まり）
@@ -204,7 +204,7 @@ function create(table, data, index) {
     if(index == 0) setTableListener(table);
     // 艦娘
     var ship = data[0].get();
-    
+
     var item = new TableItem(table, SWT.NONE);
 
     // 偶数行に背景色を付ける
@@ -322,7 +322,7 @@ function create(table, data, index) {
             }
         }
     });
-    
+
     var LabelListener = new Listener(function(event){
         var shell = label.getShell();
         switch (event.type){
@@ -367,7 +367,7 @@ function end() {
 
 /**
  * 合成した艦娘の画像を返します。
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @param {Number} width 画像の横幅(指定しない場合は80)
  * @param {Number} height 画像の縦幅(指定しない場合は20)
@@ -400,7 +400,7 @@ function getSynthesisShipImage(ship,width,height){
 
 /**
  * 合成した装備アイコンの画像を返します。
- * 
+ *
  * @param {logbook.dto.ItemDto} item2 装備のデータ
  * @param {Number} maxEq 最大搭載機数
  * @param {Number} onSlot 現在の搭載機数
@@ -513,7 +513,7 @@ function trimming(image,width,height){
 
 /**
  * 画像をリサイズして返します。
- * 
+ *
  * @param {Image} image 画像
  * @param {Number} width リサイズ後の横幅
  * @param {Number} height リサイズ後の縦幅
@@ -532,7 +532,7 @@ function resize(image,width,height){
 
 /**
  * 画像のSetを合成して一つの画像にして返します。
- * 
+ *
  * @param {java.util.Set<[Image,x,y]>} imageSet 画像のSet
  * @param {Number} width 画像の横幅
  * @param {Number} height 画像の縦幅
@@ -554,12 +554,12 @@ function compose(imageSet,width,height){
 
 /**
  * 透明の画像を返します。
- * 
+ *
  * @param {Number} width  画像の横幅
  * @param {Number} height 画像の縦幅
  */
 function getTransparentImage(width,height){
-    var src = new Image(Display.getDefault(), width, height);        
+    var src = new Image(Display.getDefault(), width, height);
     var imageData = src.getImageData();
     imageData.transparentPixel = imageData.getPixel(0, 0);
     src.dispose();
@@ -579,7 +579,7 @@ var ImageFilter = new FilenameFilter(function(dir,name){
 
 /**
  * インターネット上から画像を取得します。
- * 
+ *
  * @param {String} uri 画像のURL
  * @param {String} path ファイルパス
  * @return {org.eclipse.swt.graphics.Image} 取得した画像
@@ -599,7 +599,7 @@ function getWebImage(uri,path){
 
 /**
  * 艦娘のcond値から疲労の画像を取得します。
- * 
+ *
  * @param {logbook.dto.ShipDto} cond 艦娘のcond値
  * @return {org.eclipse.swt.graphics.Image} 疲労の画像(該当しなかった場合はnullを返す)
  */
@@ -612,7 +612,7 @@ function getCondImage(cond){
 
 /**
  * 撃沈のレイヤー画像を取得します
- * 
+ *
  * @return {org.eclipse.swt.graphics.Image} 撃沈のレイヤー画像
  */
 function getSunkImage(){
@@ -621,7 +621,7 @@ function getSunkImage(){
 
 /**
  * 赤疲労のレイヤー画像を取得します
- * 
+ *
  * @return {org.eclipse.swt.graphics.Image} 赤疲労のレイヤー画像
  */
 function getRedCondImage(){
@@ -630,7 +630,7 @@ function getRedCondImage(){
 
 /**
  * 橙疲労のレイヤー画像を取得します
- * 
+ *
  * @return {org.eclipse.swt.graphics.Image} 橙疲労のレイヤー画像
  */
 function getOrangeCondImage() {
@@ -639,7 +639,7 @@ function getOrangeCondImage() {
 
 /**
  * キラキラのレイヤー画像を取得します
- * 
+ *
  * @return {org.eclipse.swt.graphics.Image} キラのレイヤー画像
  */
 function getKiraCondImage(){
@@ -648,7 +648,7 @@ function getKiraCondImage(){
 
 /**
  * 指輪のレイヤー画像を取得します
- * 
+ *
  * @param {Number} lv 艦娘のレベル
  * @return {org.eclipse.swt.graphics.Image} 指輪のレイヤー画像(満たしていない場合はnull)
  */
@@ -659,7 +659,7 @@ function getWeddingImage(lv) {
 
 /**
  * 艦娘の状態から今の状況の画像を取得します(入渠、遠征、大破、中破、小破)。
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @return {org.eclipse.swt.graphics.Image} 状態の画像(該当しなかった場合はnullを返す)
  */
@@ -674,7 +674,7 @@ function getStateImage(ship) {
 
 /**
  * 艦娘の状態から煙の画像を取得します。
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @return {org.eclipse.swt.graphics.Image} 煙の画像(該当しなかった場合はnullを返す)
  */
@@ -689,7 +689,7 @@ function getSmokeImage(ship) {
 
 /**
  * 修復のレイヤー画像を取得します。
- * 
+ *
  * @return {org.eclipse.swt.graphics.Image} 修復のレイヤー画像
  */
 function getRepairImage() {
@@ -698,7 +698,7 @@ function getRepairImage() {
 
 /**
  * 遠征のレイヤー画像を取得します。
- * 
+ *
  * @return {org.eclipse.swt.graphics.Image} 遠征のレイヤー画像
  */
 function getMissionImage() {
@@ -707,7 +707,7 @@ function getMissionImage() {
 
 /**
  * 大破のレイヤー画像を取得します。
- * 
+ *
  * @return {org.eclipse.swt.graphics.Image} 大破のレイヤー画像
  */
 function getBadlyImage() {
@@ -716,7 +716,7 @@ function getBadlyImage() {
 
 /**
  * 大破(煙)のレイヤー画像を取得します。
- * 
+ *
  * @return {org.eclipse.swt.graphics.Image} 大破(煙)のレイヤー画像
  */
 function getBadlySmokeImage() {
@@ -725,7 +725,7 @@ function getBadlySmokeImage() {
 
 /**
  * 中破のレイヤー画像を取得します。
- * 
+ *
  * @return {org.eclipse.swt.graphics.Image} 中破のレイヤー画像
  */
 function getHalfImage() {
@@ -734,7 +734,7 @@ function getHalfImage() {
 
 /**
  * 中破(煙)のレイヤー画像を取得します。
- * 
+ *
  * @return {org.eclipse.swt.graphics.Image} 中破(煙)のレイヤー画像
  */
 function getHalfSmokeImage() {
@@ -743,7 +743,7 @@ function getHalfSmokeImage() {
 
 /**
  * 小破のレイヤー画像を取得します。
- * 
+ *
  * @return {org.eclipse.swt.graphics.Image} 小破のレイヤー画像
  */
 function getSlightImage() {
@@ -752,7 +752,7 @@ function getSlightImage() {
 
 /**
  * 小破(煙)のレイヤー画像を取得します。
- * 
+ *
  * @return {org.eclipse.swt.graphics.Image} 小破(煙)のレイヤー画像
  */
 function getSlightSmokeImage() {
@@ -761,7 +761,7 @@ function getSlightSmokeImage() {
 
 /**
  * 札のレイヤー画像を取得します
- * 
+ *
  * @return {org.eclipse.swt.graphics.Image} 札のレイヤー画像(札がない場合はnull)
  */
 function getBillImage(ship){
@@ -773,7 +773,7 @@ function getBillImage(ship){
 
 /**
  * レイヤー画像を取得します。
- * 
+ *
  * @param {String} name 名前
  * @param {String} url 取得できなかった場合のURL
  * @return {org.eclipse.swt.graphics.Image} レイヤー画像
@@ -789,7 +789,7 @@ function getLayerImage(name, url) {
 
 /**
  * 艦娘の状態から、通常または損傷状態の画像を取得します。
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @return {org.eclipse.swt.graphics.Image} 艦娘の画像
  */
@@ -817,7 +817,7 @@ function getShipImage(ship) {
 
 /**
  * 装備アイコンの画像を取得します。
- * 
+ *
  * @param {Number} type3 表示分類
  * @return {org.eclipse.swt.graphics.Image} 装備アイコンの画像
  */
@@ -870,7 +870,7 @@ ShipDtoEx.prototype.equals = function(shipDtoEx){
 
 /**
  * Pointから列番号を取得します。
- * 
+ *
  * @param {org.eclipse.swt.graphics.Point} pt 座標
  * @param {org.eclipse.swt.widgets.TableItem} item TableItem
  * @return {Number} 列番号(見つからない場合は-1を返す)
@@ -888,7 +888,7 @@ function getColumnIndex(pt,item){
 
 /**
  * テーブルの列でデータを取得するか判断、取得する場合は装備データを加工したものを返します。しない場合はnullを返す。
- * 
+ *
  * @param {Number} index 列番号
  * @param {org.eclipse.swt.widgets.TableItem} _ship テーブルの行
  * @return {String} データ
@@ -954,7 +954,7 @@ function toItemData(index,_ship){
 
 /**
  * テーブルの列でデータを取得するか判断、取得する場合は艦娘のステータスを加工したものを返します。しない場合はnullを返す。
- * 
+ *
  * @param {Number} index 列番号
  * @param {org.eclipse.swt.widgets.TableItem} ship 艦娘のデータ
  * @return {String} データ
@@ -980,7 +980,7 @@ function toStatus(index,ship){
 
 /**
  * テーブルの列でデータを取得するか判断、取得する場合は艦娘のHPを加工したものを返します。しない場合はnullを返す。
- * 
+ *
  * @param {Number} index 列番号
  * @param {org.eclipse.swt.widgets.TableItem} _ship テーブルの行
  * @return {String} データ
@@ -1026,7 +1026,7 @@ function toHpDetail(index,_ship){
 
 /**
  * テーブルの列でデータを取得するか判断、取得する場合は遠征数を返します。しない場合はnullを返す。
- * 
+ *
  * @param {Number} index 列番号
  * @param {org.eclipse.swt.widgets.TableItem} ship テーブルの行
  * @return {String} データ
@@ -1086,7 +1086,7 @@ var PaintHandler = new Listener(function(event) {
 
 /**
  * 複数の色の中間色を取得する(nashorn用に改造)
- * 
+ *
  * @param {Float32Array} raito 割合
  * @param {org.eclipse.swt.graphics.Color} start 開始色
  * @param {org.eclipse.swt.graphics.Color} end 終了色
@@ -1122,7 +1122,7 @@ function gradation(raito, start, end) {
 
 /**
  * 進捗バーを描画するイベントを設定します。
- * 
+ *
  * @param {org.eclipse.swt.widgets.Table} table テーブル
  */
 function setTableListener(table){
@@ -1209,7 +1209,7 @@ function loadItemIconImage(){
 
 /**
  * 砲撃戦火力を返します。
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @return {Number} 砲撃戦火力
  */
@@ -1235,7 +1235,7 @@ function getHougekiPower(ship){
 
 /**
  * 対潜火力を返します。
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @return {Number} 対潜火力
  */
@@ -1278,14 +1278,14 @@ function getTaisenPower(ship){
         default:
             return 0;
     }
-    
+
     var taisenPower = (Math.sqrt(taisenShip) * 2 + taisenItem * 1.5 + getTaisenKaishuPower(item2) + taisenBasicPower) * getHPPowerBonus(ship,false) * (hasTaisenSynergy(item2) ? 1.15 : 1.0) * (1 + (hasNewTaisenSynergy(item2) ? 0.15 : 0) + (hasBakuraiSynergy(item2) ? 0.1 : 0));
     return ammoCorrection(ship,softcap(taisenPower,100));
 }
 
 /**
  * 夜戦火力を返します。
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @return {Number} 夜戦火力
  */
@@ -1298,7 +1298,7 @@ function getYasenPower(ship){
 
 /**
  * 雷撃戦火力を返します。
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @return {String} 雷撃戦火力
  */
@@ -1319,7 +1319,7 @@ function getRaigekiPower(ship){
 
 /**
  * 航空威力を返します。
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @return {String} 航空威力
  */
@@ -1364,7 +1364,7 @@ function getKoukuPower(ship){
 
 /**
  * 雷撃攻撃が出来るか判断します。
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @return {boolean}
  */
@@ -1376,7 +1376,7 @@ function canRaigeki(ship){
 
 /**
  * 開幕雷撃攻撃が出来るか判断します。
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @return {boolean}
  */
@@ -1398,7 +1398,7 @@ function canKaimakuRaigeki(ship){
 
 /**
  * 対潜攻撃の種別を返します。
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @return {Number} -1なら攻撃なし、7なら空撃、8なら爆雷攻撃
  */
@@ -1523,7 +1523,7 @@ function isBakurai(item){
 
 /**
  * 対潜改修補正火力を返します。
- * 
+ *
  * @param {logbook.dto.ItemDto} item2 装備データ
  * @return {Number} 改修補正火力
  */
@@ -1533,7 +1533,7 @@ function getTaisenKaishuPower(item2){
 
 /**
  * 砲撃戦改修補正火力を返します。
- * 
+ *
  * @param {logbook.dto.ItemDto} item2 装備データ
  * @return {Number} 改修補正火力
  */
@@ -1564,7 +1564,7 @@ function getHougekiKaishuPower(item2){
 
 /**
  * 夜戦改修補正火力を返します。
- * 
+ *
  * @param {logbook.dto.ItemDto} item2 装備データ
  * @return {Number} 改修補正火力
  */
@@ -1593,7 +1593,7 @@ function getYasenKaishuPower(item2){
 
 /**
  * 雷撃戦改修補正火力を返します。
- * 
+ *
  * @param {logbook.dto.ItemDto} item2 装備データ
  * @return {Number} 改修補正火力
  */
@@ -1603,7 +1603,7 @@ function getRaigekiKaishuPower(item2){
 
 /**
  * ソフトキャップ
- * 
+ *
  * @param {Number} 火力
  * @param {Number} キャップ値
  * @return {Number} 補正後火力
@@ -1614,7 +1614,7 @@ function softcap(power,cap){
 
 /**
  * 砲撃戦種別を返します。
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @return {Number} 種別
  */
@@ -1665,7 +1665,7 @@ function getHougekiKind(ship){
 
 /**
  * 夜戦種別を返します。
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @return {Number} 種別
  */
@@ -1688,7 +1688,7 @@ function getYasenKind(ship){
         if(lateTorpedo >= 1 && radiolocator >= 1) return 3.1; // 後電CI
         if(lateTorpedo >= 2) return 3.2; // 後魚CI
         return 3; // 魚雷CI
-    } 
+    }
     if((mainGun == 2 || mainGun == 1) && torpedo == 1) return 2;
     if(mainGun == 2 || (mainGun == 1 && subGun >= 1) || (subGun >= 2 && (torpedo == 0 || torpedo == 1))) return 1;
     // それ以外の処理
@@ -1715,7 +1715,7 @@ function getYasenKind(ship){
 
 /**
  * 弾着ダメージ倍率を返します。
- * 
+ *
  * @param {Number} kind 種別
  * @return {Number} 補正倍率
  */
@@ -1732,7 +1732,7 @@ function getDanchakuDamageMagnification(kind){
 
 /**
  * 夜戦CIダメージ倍率を返します。
- * 
+ *
  * @param {Number} kind 種別
  * @return {Number} 補正倍率
  */
@@ -1751,7 +1751,7 @@ function getYasenCutinDamageMagnification(kind){
 
 /**
  * 砲撃戦の種類を返します。
- * 
+ *
  * @param {Number} kind 種別
  * @return {Number} 種類
  */
@@ -1773,7 +1773,7 @@ function getHougekiKindString(kind){
 
 /**
  * 夜戦砲撃の種類を返します。
- * 
+ *
  * @param {Number} kind 種別
  * @return {Number} 種類
  */
@@ -1797,7 +1797,7 @@ function getYasenKindString(kind){
 
 /**
  * 弾薬補正(キャップ後最終計算)
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @param {Number} 火力
  * @return {Number} 補正火力
@@ -1808,7 +1808,7 @@ function ammoCorrection(ship,power){
 
 /**
  * 耐久補正
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @param {Number} 火力
  * @return {Number} 補正火力
@@ -1824,7 +1824,7 @@ function getHPPowerBonus(ship,isKaimakuRaigeki){
 
 /**
  * 軽巡軽量砲補正を返します。
- * 
+ *
  * @param {logbook.dto.ShipDto} ship 艦娘のデータ
  * @return {Number} 補正火力
  */
@@ -1861,7 +1861,7 @@ function getCLLightGunPowerBonus(ship){
             return Math.sqrt(twin) * 2 + Math.sqrt(single);
         default:
             return 0;
-    } 
+    }
 }
 
 function toDateRestString(rest){
