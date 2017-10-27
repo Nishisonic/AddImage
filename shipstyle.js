@@ -1343,8 +1343,9 @@ function getKoukuPower(ship){
     }).mapToDouble(function(i){
         switch(item2.get(i).type2){
             case 7:  // 艦上爆撃機
-            case 11: // 水上爆撃機
                 return item2.get(i).param.baku * Math.sqrt(onslots[i]) + 25;
+            case 11: // 水上爆撃機
+                return (item2.get(i).param.baku + item2.get(i).level * 0.2) * Math.sqrt(onslots[i]) + 25;
             case 8:  // 艦上攻撃機
                 return (item2.get(i).param.raig * Math.sqrt(onslots[i]) + 25) * 1.5;
             case 57: // 噴式戦闘爆撃機
@@ -1982,6 +1983,19 @@ function getTaikuCutinID(ship){
                 return 20;
             }
             break;
+        case 488: // 由良改二
+            if ( highangle >= 1 && aaradar >= 1 )
+                return 21;
+            break;
+        case 548: // 文月改二
+            if ( aagun_concentrated >= 1 )
+                return 22;
+            break;
+        case 539: // UIT-25
+        case 530: // 伊504
+            if ( aagun - aagun_concentrated >= 1 )
+                return 23;
+            break;
     }
 
 
@@ -2033,6 +2047,9 @@ function toTaikuCutinString(id){
         case 18:return "集中機銃";
         case 19:return "高角砲/集中機銃";
         case 20:return "集中機銃";
+        case 21:return "高角砲/電探";
+        case 22:return "集中機銃";
+        case 23:return "機銃";
         default:return "不明("+id+")";
     }
 }
