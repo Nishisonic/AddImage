@@ -59,22 +59,22 @@ var SHIP_LAYER_IMAGE_DIR   = "./script/Image/Layer/";
 var NORMAL_SHIP_IMAGE_DIR  = "./script/Image/Ship/Normal/";
 var DAMAGED_SHIP_IMAGE_DIR = "./script/Image/Ship/Damaged/";
 var ITEM_ICON_IMAGE_DIR    = "./script/Image/Item/Icon/";
-var SUNK_IMAGE_URL         = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Sunk.png";
-var RED_COND_IMAGE_URL     = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Red.png";
-var ORANGE_COND_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Orange.png";
-var KIRA_COND_IMAGE_URL    = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Kira.png";
-var WEDDING_IMAGE_URL      = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Wedding_Layer.png";
-var MISSION_IMAGE_URL      = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Mission.png";
-var REPAIR_IMAGE_URL       = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Repair.png";
+var SUNK_IMAGE_URL         = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Sunk2.png";
+var RED_COND_IMAGE_URL     = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Red2.png";
+var ORANGE_COND_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Orange2.png";
+var KIRA_COND_IMAGE_URL    = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Kira2.png";
+var WEDDING_IMAGE_URL      = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Wedding_Layer2.png";
+var MISSION_IMAGE_URL      = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Mission2.png";
+var REPAIR_IMAGE_URL       = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Repair2.png";
 var NORMAL_SHIP_IMAGE_URL  = "http://nishisonic.xsrv.jp/ship/banner/";
 var DAMAGED_SHIP_IMAGE_URL = "http://nishisonic.xsrv.jp/ship/banner_dmg/";
 var ITEM_ICON_IMAGE_URL    = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Item/Icon/";
-var BADLY_IMAGE_URL        = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Badly.png";
-var BADLY_SMOKE_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/BadlySmoke.png";
-var HALF_IMAGE_URL         = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Half.png";
-var HALF_SMOKE_IMAGE_URL   = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/HalfSmoke.png";
-var SLIGHT_IMAGE_URL       = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Slight.png";
-var SLIGHT_SMOKE_IMAGE_URL = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/SlightSmoke.png";
+var BADLY_IMAGE_URL        = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Badly2.png";
+var BADLY_SMOKE_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/BadlySmoke2.png";
+var HALF_IMAGE_URL         = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Half2.png";
+var HALF_SMOKE_IMAGE_URL   = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/HalfSmoke2.png";
+var SLIGHT_IMAGE_URL       = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Slight2.png";
+var SLIGHT_SMOKE_IMAGE_URL = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/SlightSmoke2.png";
 var BILL_IMAGE_URL         = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Bill";
 var BILL_UPDATE_CHECK_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/BillUpdateCheck.txt";
 var ALV_COLOR              = [new RGB(255,255,255),
@@ -121,6 +121,7 @@ var itemType1Index  = -1;
 var itemType2Index  = -1;
 var itemType3Index  = -1;
 var itemType4Index  = -1;
+var itemType5Index  = -1;
 var itemTypeExIndex = -1;
 var hpIndex         = -1;
 var fuelIndex       = -1;
@@ -159,7 +160,7 @@ function begin(header) {
         if (header[i].equals("種別画像2"))       itemType2Index = i;
         if (header[i].equals("種別画像3"))       itemType3Index = i;
         if (header[i].equals("種別画像4"))       itemType4Index = i;
-        //if (header[i].equals("種別画像5"))     itemType5Index = i;
+        if (header[i].equals("種別画像5"))       itemType5Index = i;
         if (header[i].equals("種別画像Ex"))      itemTypeExIndex = i;
         if (header[i].equals("HP"))              hpIndex = i;
         if (header[i].equals("燃料#現在の燃料")) fuelIndex = i;
@@ -266,7 +267,7 @@ function create(table, data, index) {
     item.setImage(itemType2Index, paintDto.ItemIconList.get(1));
     item.setImage(itemType3Index, paintDto.ItemIconList.get(2));
     item.setImage(itemType4Index, paintDto.ItemIconList.get(3));
-    //item.setImage(itemType5Index, paintDto.ItemIconList.get(4)); 5スロ目対応分
+    item.setImage(itemType5Index, paintDto.ItemIconList.get(4));
     item.setImage(itemTypeExIndex, paintDto.ItemIconList.get(5));
 
     //ツールチップ処理
@@ -381,14 +382,14 @@ function getSynthesisShipImage(ship,width,height){
         imageSet.add([getStateImage(ship),0,0]);
         imageSet.add([getSmokeImage(ship),0,0]);
         imageSet.add([getCondImage(ship.cond),0,0]);
-        imageSet.add([getWeddingImage(ship.lv),139,18]);
-        imageSet.add([getBillImage(ship),34,-3]);
+        imageSet.add([getWeddingImage(ship.lv),69,8]);
+        imageSet.add([getBillImage(ship),17,-1]);
     }
     // 160x40を取り敢えず基準に
-    var tmpImage = compose(imageSet,160,40);
-    var resultImage = resize(tmpImage,width,height);
-    tmpImage.dispose();
-    return resultImage;
+    var tmpImage = compose(imageSet,width,height);
+    // var resultImage = resize(tmpImage,width,height);
+    // tmpImage.dispose();
+    return tmpImage;
 }
 
 /**
@@ -609,7 +610,7 @@ function getCondImage(cond){
  * @return {org.eclipse.swt.graphics.Image} 撃沈のレイヤー画像
  */
 function getSunkImage(){
-    return getLayerImage("Sunk", SUNK_IMAGE_URL);
+    return getLayerImage("Sunk2", SUNK_IMAGE_URL);
 }
 
 /**
@@ -618,7 +619,7 @@ function getSunkImage(){
  * @return {org.eclipse.swt.graphics.Image} 赤疲労のレイヤー画像
  */
 function getRedCondImage(){
-    return getLayerImage("Red", RED_COND_IMAGE_URL);
+    return getLayerImage("Red2", RED_COND_IMAGE_URL);
 }
 
 /**
@@ -627,7 +628,7 @@ function getRedCondImage(){
  * @return {org.eclipse.swt.graphics.Image} 橙疲労のレイヤー画像
  */
 function getOrangeCondImage() {
-    return getLayerImage("Orange", ORANGE_COND_IMAGE_URL);
+    return getLayerImage("Orange2", ORANGE_COND_IMAGE_URL);
 }
 
 /**
@@ -636,7 +637,7 @@ function getOrangeCondImage() {
  * @return {org.eclipse.swt.graphics.Image} キラのレイヤー画像
  */
 function getKiraCondImage(){
-    return getLayerImage("Kira", KIRA_COND_IMAGE_URL);
+    return getLayerImage("Kira2", KIRA_COND_IMAGE_URL);
 }
 
 /**
@@ -646,7 +647,7 @@ function getKiraCondImage(){
  * @return {org.eclipse.swt.graphics.Image} 指輪のレイヤー画像(満たしていない場合はnull)
  */
 function getWeddingImage(lv) {
-    if (lv > 99) return getLayerImage("Wedding_Layer", WEDDING_IMAGE_URL);
+    if (lv > 99) return getLayerImage("Wedding_Layer2", WEDDING_IMAGE_URL);
     return null;
 }
 
@@ -686,7 +687,7 @@ function getSmokeImage(ship) {
  * @return {org.eclipse.swt.graphics.Image} 修復のレイヤー画像
  */
 function getRepairImage() {
-    return getLayerImage("Repair", REPAIR_IMAGE_URL);
+    return getLayerImage("Repair2", REPAIR_IMAGE_URL);
 }
 
 /**
@@ -695,7 +696,7 @@ function getRepairImage() {
  * @return {org.eclipse.swt.graphics.Image} 遠征のレイヤー画像
  */
 function getMissionImage() {
-    return getLayerImage("Mission", MISSION_IMAGE_URL);
+    return getLayerImage("Mission2", MISSION_IMAGE_URL);
 }
 
 /**
@@ -704,7 +705,7 @@ function getMissionImage() {
  * @return {org.eclipse.swt.graphics.Image} 大破のレイヤー画像
  */
 function getBadlyImage() {
-    return getLayerImage("Badly", BADLY_IMAGE_URL);
+    return getLayerImage("Badly2", BADLY_IMAGE_URL);
 }
 
 /**
@@ -713,7 +714,7 @@ function getBadlyImage() {
  * @return {org.eclipse.swt.graphics.Image} 大破(煙)のレイヤー画像
  */
 function getBadlySmokeImage() {
-    return getLayerImage("BadlySmoke", BADLY_SMOKE_IMAGE_URL);
+    return getLayerImage("BadlySmoke2", BADLY_SMOKE_IMAGE_URL);
 }
 
 /**
@@ -722,7 +723,7 @@ function getBadlySmokeImage() {
  * @return {org.eclipse.swt.graphics.Image} 中破のレイヤー画像
  */
 function getHalfImage() {
-    return getLayerImage("Half", HALF_IMAGE_URL);
+    return getLayerImage("Half2", HALF_IMAGE_URL);
 }
 
 /**
@@ -731,7 +732,7 @@ function getHalfImage() {
  * @return {org.eclipse.swt.graphics.Image} 中破(煙)のレイヤー画像
  */
 function getHalfSmokeImage() {
-    return getLayerImage("HalfSmoke", HALF_SMOKE_IMAGE_URL);
+    return getLayerImage("HalfSmoke2", HALF_SMOKE_IMAGE_URL);
 }
 
 /**
@@ -740,7 +741,7 @@ function getHalfSmokeImage() {
  * @return {org.eclipse.swt.graphics.Image} 小破のレイヤー画像
  */
 function getSlightImage() {
-    return getLayerImage("Slight", SLIGHT_IMAGE_URL);
+    return getLayerImage("Slight2", SLIGHT_IMAGE_URL);
 }
 
 /**
@@ -749,7 +750,7 @@ function getSlightImage() {
  * @return {org.eclipse.swt.graphics.Image} 小破(煙)のレイヤー画像
  */
 function getSlightSmokeImage() {
-    return getLayerImage("SlightSmoke", SLIGHT_SMOKE_IMAGE_URL);
+    return getLayerImage("SlightSmoke2", SLIGHT_SMOKE_IMAGE_URL);
 }
 
 /**
@@ -802,7 +803,7 @@ function getShipImage(ship) {
     }
     var image  = getData(prefix + shipId + ".png");
     if (!(image instanceof Image)) {
-        image = getWebImage(url, dir);
+        image = resize(getWebImage(url, dir), 80, 20);
         setTmpData(prefix + shipId + ".png", image);
     }
     return image;
@@ -1023,7 +1024,7 @@ var PaintHandler = new Listener(function(event) {
             case ammoIndex: return ship.bull / ship.bullMax;
             //case lvIndex: return s.lv > 99 ? s.lv / 155 : s.lv / 99;
             case nextIndex: return ship.expraito;
-            case expIndex:  return ship.lv > 99 ? ship.exp / 7820000 : ship.exp / 1000000;
+            case expIndex:  return ship.lv > 99 ? ship.exp / 10950000 : ship.exp / 1000000;
             default:        return null;
         }
     }(event.index);
@@ -1121,7 +1122,7 @@ function loadLayerImage(){
     var shipLayerImageDir  = new File(SHIP_LAYER_IMAGE_DIR);
     if(shipLayerImageDir.exists()){
         Arrays.stream(shipLayerImageDir.listFiles(ImageFilter)).forEach(function(file){
-            setTmpData("LAYER_" + file.getName(),SWTResourceManager.getImage(file.toString()));
+            setTmpData("LAYER_" + file.getName(), SWTResourceManager.getImage(file.toString()));
         });
     } else {
         shipLayerImageDir.mkdirs();
@@ -1143,7 +1144,7 @@ function loadNormalShipImage(){
     var normalShipImageDir = new File(NORMAL_SHIP_IMAGE_DIR);
     if(normalShipImageDir.exists()){
         Arrays.stream(normalShipImageDir.listFiles(ImageFilter)).forEach(function(file){
-            setTmpData("NORMAL_" + file.getName(),SWTResourceManager.getImage(file.toString()));
+            setTmpData("NORMAL_" + file.getName(), resize(SWTResourceManager.getImage(file.toString()),80,20));
         });
     } else {
         normalShipImageDir.mkdirs();
@@ -1157,7 +1158,7 @@ function loadDamagedShipImage(){
     var damagedShipImageDir = new File(DAMAGED_SHIP_IMAGE_DIR);
     if(damagedShipImageDir.exists()){
         Arrays.stream(damagedShipImageDir.listFiles(ImageFilter)).forEach(function(file){
-            setTmpData("DAMAGED_" + file.getName(),SWTResourceManager.getImage(file.toString()));
+            setTmpData("DAMAGED_" + file.getName(), resize(SWTResourceManager.getImage(file.toString()),80,20));
         });
     } else {
         damagedShipImageDir.mkdirs();
