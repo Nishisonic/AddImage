@@ -759,7 +759,7 @@ function getSlightSmokeImage() {
  */
 function getBillImage(ship){
     if(ship.json == null || isJsonNull(ship.json.api_sally_area) || ship.json.api_sally_area.intValue() == 0) return null;
-    var ver = getData("BillVersion");
+    var ver = getData("BillVersion").replace(/\r\n/g, '');
     var area = ship.json.api_sally_area.intValue();
     return getLayerImage("Bill" + ver + area, BILL_IMAGE_URL + ver + area + ".png");
 }
@@ -1030,6 +1030,7 @@ var PaintHandler = new Listener(function(event) {
     // 背景を描く
     // 進捗バーを消す場合、下のcase文を消すことで非表示に出来る
     var bgColor = function(index){
+        if(ship == null) return null;
         switch(index){
             case hpIndex:
             case fuelIndex:
