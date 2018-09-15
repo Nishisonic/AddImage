@@ -1,7 +1,7 @@
 /**
- * 画像追加 Ver2.2.1
+ * 画像追加 Ver2.2.2
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2018/02/04
+ * LastUpdate:2018/09/16
  *
  * 所有艦娘一覧に画像を追加します。
  */
@@ -66,8 +66,8 @@ var KIRA_COND_IMAGE_URL    = "https://raw.githubusercontent.com/Nishisonic/AddIm
 var WEDDING_IMAGE_URL      = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Wedding_Layer.png";
 var MISSION_IMAGE_URL      = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Mission.png";
 var REPAIR_IMAGE_URL       = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Repair.png";
-var NORMAL_SHIP_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Ship/Normal/";
-var DAMAGED_SHIP_IMAGE_URL = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Ship/Damaged/";
+var NORMAL_SHIP_IMAGE_URL  = "http://nishisonic.xsrv.jp/ship/banner/";
+var DAMAGED_SHIP_IMAGE_URL = "http://nishisonic.xsrv.jp/ship/banner_dmg/";
 var ITEM_ICON_IMAGE_URL    = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Item/Icon/";
 var BADLY_IMAGE_URL        = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/Badly.png";
 var BADLY_SMOKE_IMAGE_URL  = "https://raw.githubusercontent.com/Nishisonic/AddImage/master/Image/Layer/BadlySmoke.png";
@@ -793,17 +793,17 @@ function getShipImage(ship) {
     var dir;
     if(!ship.isHalfDamage()){
         prefix = "NORMAL_";
-        url = NORMAL_SHIP_IMAGE_URL + shipId + ".jpg";
-        dir = NORMAL_SHIP_IMAGE_DIR + shipId + ".jpg";
+        url = NORMAL_SHIP_IMAGE_URL + shipId + ".png";
+        dir = NORMAL_SHIP_IMAGE_DIR + shipId + ".png";
     } else {
         prefix = "DAMAGED_";
-        url = DAMAGED_SHIP_IMAGE_URL + shipId + ".jpg";
-        dir = DAMAGED_SHIP_IMAGE_DIR + shipId + ".jpg";
+        url = DAMAGED_SHIP_IMAGE_URL + shipId + ".png";
+        dir = DAMAGED_SHIP_IMAGE_DIR + shipId + ".png";
     }
-    var image  = getData(prefix + shipId + ".jpg");
+    var image  = getData(prefix + shipId + ".png");
     if (!(image instanceof Image)) {
         image = getWebImage(url, dir);
-        setTmpData(prefix + shipId + ".jpg", image);
+        setTmpData(prefix + shipId + ".png", image);
     }
     return image;
 }
