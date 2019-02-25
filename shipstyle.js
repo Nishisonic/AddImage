@@ -1,7 +1,7 @@
 /**
- * 画像追加 Ver2.2.3
+ * 画像追加 Ver2.2.4
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2019/01/01
+ * LastUpdate:2019/02/26
  *
  * 所有艦娘一覧に画像を追加します。
  */
@@ -40,6 +40,7 @@ LinkedHashSet = Java.type("java.util.LinkedHashSet");
 LinkedList = Java.type("java.util.LinkedList");
 Map = Java.type("java.util.Map");
 IntStream = Java.type("java.util.stream.IntStream");
+HttpsURLConnection = Java.type("javax.net.ssl.HttpsURLConnection");
 
 AppConstants = Java.type("logbook.constants.AppConstants");
 GlobalContext = Java.type("logbook.data.context.GlobalContext");
@@ -607,7 +608,7 @@ var ImageFilter = new FilenameFilter(function (dir, name) {
  */
 function getWebImage(uri, path) {
     var url = new URL(uri);
-    var urlConnection = HttpURLConnection.class.cast(url.openConnection());
+    var urlConnection = HttpsURLConnection.class.cast(url.openConnection());
     urlConnection.connect();
     if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
         var file = Paths.get(path);
