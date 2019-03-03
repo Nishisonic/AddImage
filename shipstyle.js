@@ -1,7 +1,7 @@
 /**
- * 画像追加 Ver2.2.4
+ * 画像追加 Ver2.2.5
  * Author:Nishisonic,Nekopanda
- * LastUpdate:2019/02/26
+ * LastUpdate:2019/03/04
  *
  * 所有艦娘一覧に画像を追加します。
  */
@@ -41,6 +41,9 @@ LinkedList = Java.type("java.util.LinkedList");
 Map = Java.type("java.util.Map");
 IntStream = Java.type("java.util.stream.IntStream");
 HttpsURLConnection = Java.type("javax.net.ssl.HttpsURLConnection");
+HostnameVerifier = Java.type("javax.net.ssl.HostnameVerifier");
+SSLContext = Java.type("javax.net.ssl.SSLContext");
+X509TrustManager = Java.type("javax.net.ssl.X509TrustManager");
 
 AppConstants = Java.type("logbook.constants.AppConstants");
 GlobalContext = Java.type("logbook.data.context.GlobalContext");
@@ -602,21 +605,61 @@ var ImageFilter = new FilenameFilter(function (dir, name) {
 /**
  * インターネット上から画像を取得します。
  *
- * @param {String} uri 画像のURL
+ * @param {String} url 画像のURL
  * @param {String} path ファイルパス
  * @return {org.eclipse.swt.graphics.Image} 取得した画像
  */
-function getWebImage(uri, path) {
-    var url = new URL(uri);
-    var urlConnection = HttpsURLConnection.class.cast(url.openConnection());
-    urlConnection.connect();
-    if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-        var file = Paths.get(path);
-        //元からファイルが無い前提なので上書き設定は無し
-        Files.copy(urlConnection.getInputStream(), file);
-        return SWTResourceManager.getImage(file.toString());
+function getWebImage(url, path) {
+    var urlconn = getHttpsConnection(url)
+    var file = Paths.get(path);
+    //元からファイルが無い前提なので上書き設定は無し
+    Files.copy(urlconn.getInputStream(), file);
+    urlconn.disconnect();
+    return SWTResourceManager.getImage(file.toString());
+}
+
+/**
+ * 証明書を無視して接続する。
+ *
+ * @param {String} url URL
+ * @return {java.net.HttpURLConnection} connection
+ */
+function getHttpsConnection(url) {
+    var urlconn = null;
+    var connectURL = new URL(url);
+    // https接続の場合
+    if ("https".equals(connectURL.getProtocol())) {
+        //証明書情報 全て空を返す
+        var Manager = Java.extend(X509TrustManager, {
+            getAcceptedIssuers: function () {
+                return null;
+            },
+            checkClientTrusted: function (chain, authType) {
+            },
+            checkServerTrusted: function (chain, authType) {
+            },
+        });
+        var tm = [new Manager()];
+        var sslcontext = SSLContext.getInstance("SSL");
+        sslcontext.init(null, tm, null);
+        //ホスト名の検証ルール 何が来てもtrueを返す
+        var Verifier = Java.extend(HostnameVerifier, {
+            verify: function (hostname, session) {
+                return true;
+            },
+        });
+        HttpsURLConnection.setDefaultHostnameVerifier(new Verifier());
+        urlconn = HttpsURLConnection.class.cast(connectURL.openConnection());
+        HttpsURLConnection.class.cast(urlconn).setSSLSocketFactory(sslcontext.getSocketFactory());
+    // http接続の場合
+    } else {
+        urlconn = HttpURLConnection.class.cast(connectURL.openConnection());
     }
-    return null;
+    // http,https共通
+    urlconn.setRequestMethod("GET");
+    //接続
+    urlconn.connect();
+    return urlconn;
 }
 
 /**
