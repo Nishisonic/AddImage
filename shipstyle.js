@@ -1,5 +1,5 @@
 /**
- * 画像追加 Ver2.2.5
+ * 画像追加 Ver2.2.6
  * Author:Nishisonic,Nekopanda
  * LastUpdate:2019/03/04
  *
@@ -610,12 +610,16 @@ var ImageFilter = new FilenameFilter(function (dir, name) {
  * @return {org.eclipse.swt.graphics.Image} 取得した画像
  */
 function getWebImage(url, path) {
-    var urlconn = getHttpsConnection(url)
+    var urlconn = getHttpsConnection(url);
     var file = Paths.get(path);
-    //元からファイルが無い前提なので上書き設定は無し
-    Files.copy(urlconn.getInputStream(), file);
+    if (urlconn.getResponseCode() === HttpURLConnection.HTTP_OK) {
+        //元からファイルが無い前提なので上書き設定は無し
+        Files.copy(urlconn.getInputStream(), file);
+        urlconn.disconnect();
+        return SWTResourceManager.getImage(file.toString());
+    }
     urlconn.disconnect();
-    return SWTResourceManager.getImage(file.toString());
+    return null;
 }
 
 /**
